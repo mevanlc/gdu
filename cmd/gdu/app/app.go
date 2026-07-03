@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/gdamore/tcell/v2"
+	"github.com/google/shlex"
 	"github.com/rivo/tview"
 	log "github.com/sirupsen/logrus"
 
@@ -83,6 +84,7 @@ type Flags struct {
 	NoDelete           bool     `yaml:"no-delete"`
 	NoViewFile         bool     `yaml:"no-view-file"`
 	NoSpawnShell       bool     `yaml:"no-spawn-shell"`
+	TrashCmd           string   `yaml:"trash-cmd"`
 	NoConfirmQuit      bool     `yaml:"no-confirm-quit"`
 	FollowSymlinks     bool     `yaml:"follow-symlinks"`
 	Profiling          bool     `yaml:"profiling"`
@@ -409,7 +411,10 @@ func (a *App) createUI() (UI, error) {
 		}
 		ui = stdoutUI
 	default:
-		opts := a.getOptions()
+		opts, err := a.getOptions()
+		if err != nil {
+			return nil, err
+		}
 
 		ui = tui.CreateUI(
 			a.TermApp,
@@ -434,7 +439,7 @@ func (a *App) createUI() (UI, error) {
 }
 
 // nolint:gocyclo,funlen // This function is a suite of if statements
-func (a *App) getOptions() []tui.Option {
+func (a *App) getOptions() ([]tui.Option, error) {
 	var opts []tui.Option
 
 	if a.Flags.Style.SelectedRow.TextColor != "" {
@@ -547,6 +552,18 @@ func (a *App) getOptions() []tui.Option {
 			ui.SetNoSpawnShell()
 		})
 	}
+	if a.Flags.TrashCmd != "" {
+		trashCmd, err := shlex.Split(a.Flags.TrashCmd)
+		if err != nil {
+			return nil, fmt.Errorf("parsing --trash-cmd: %w", err)
+		}
+		if len(trashCmd) == 0 {
+			return nil, fmt.Errorf("parsing --trash-cmd: command is empty")
+		}
+		opts = append(opts, func(ui *tui.UI) {
+			ui.SetTrashCmd(trashCmd)
+		})
+	}
 	if a.Flags.NoConfirmQuit {
 		opts = append(opts, func(ui *tui.UI) {
 			ui.SetConfirmQuit(false)
@@ -570,7 +587,7 @@ func (a *App) getOptions() []tui.Option {
 	opts = append(opts, func(ui *tui.UI) {
 		ui.SetShowDiskProgressBar(a.Flags.Style.ProgressModal.ShowDiskProgressBar)
 	})
-	return opts
+	return opts, nil
 }
 
 func (a *App) setNoCross(path string) error {

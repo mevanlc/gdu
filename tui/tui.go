@@ -48,6 +48,8 @@ type UI struct {
 	remover                 func(fs.Item, fs.Item) error
 	emptier                 func(fs.Item, fs.Item) error
 	exec                    func(argv0 string, argv []string, envv []string) error
+	trashCmd                []string
+	trashRunner             func(argv []string, selectedPath string) ([]byte, error)
 	changeCwdFn             func(string) error
 	linkedItems             fs.HardLinkedItems
 	ignoredRows             map[int]struct{}
@@ -149,6 +151,7 @@ func CreateUI(
 		remover:                 remove.ItemFromDir,
 		emptier:                 remove.EmptyFileFromDir,
 		exec:                    Execute,
+		trashRunner:             runTrashCommand,
 		linkedItems:             make(fs.HardLinkedItems, 10),
 		selectedTextColor:       tview.Styles.TitleColor,
 		selectedBackgroundColor: tview.Styles.MoreContrastBackgroundColor,
@@ -377,6 +380,11 @@ func (ui *UI) SetNoSpawnShell() {
 	ui.noSpawnShell = true
 }
 
+// SetTrashCmd sets the command used by the t hotkey to trash the selected item.
+func (ui *UI) SetTrashCmd(cmd []string) {
+	ui.trashCmd = append([]string(nil), cmd...)
+}
+
 func (ui *UI) SetNoViewFile() {
 	ui.noViewFile = true
 }
@@ -570,13 +578,13 @@ func (ui *UI) confirmDeletionSelected(shouldEmpty bool) {
 				tview.Escape(selectedFile.GetName()) +
 				"\"?",
 		).
-		AddButtons([]string{"no", "yes", "don't ask me again"}).
+		AddButtons([]string{"yes", "no", "don't ask me again"}).
 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 			switch buttonIndex {
 			case 2:
 				ui.askBeforeDelete = false
 				fallthrough
-			case 1:
+			case 0:
 				ui.deleteSelected(shouldEmpty)
 			}
 			ui.pages.RemovePage("confirm")

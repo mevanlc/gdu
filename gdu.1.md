@@ -104,6 +104,8 @@ non-interactive mode
 
 **\--no-view-file**\[=false\] Do not allow viewing file contents
 
+**\--trash-cmd** Command to move selected items to trash (enables t hotkey)
+
 **-f**, **\--input-file** Import analysis from JSON file. If the file is \"-\", read from standard input.
 
 **-o**, **\--output-file** Export all info into file as JSON. If the file is \"-\", write to standard output.

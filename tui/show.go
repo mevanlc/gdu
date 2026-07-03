@@ -36,9 +36,10 @@ var (
 Item under cursor:
                [::b]d     [white:black:-]Delete file or directory
                [::b]e     [white:black:-]Empty file or directory
-			   [::b]space [white:black:-]Mark file or directory for deletion
-			   [::b]p     [white:black:-]Print marked items paths to stdout after quitting
-			   [::b]I     [white:black:-]Ignore file or directory
+               [::b]t     [white:black:-]Trash file or directory
+                   [::b]space [white:black:-]Mark file or directory for deletion
+                   [::b]p     [white:black:-]Print marked items paths to stdout after quitting
+                   [::b]I     [white:black:-]Ignore file or directory
                [::b]v     [white:black:-]Show content of file
                [::b]o     [white:black:-]Open file or directory in external program
                [::b]i     [white:black:-]Show info about item
@@ -388,13 +389,17 @@ func (ui *UI) formatHelpTextFor() string {
 			)
 		}
 
-		isFound := (strings.Contains(line, "Empty file or directory") ||
-			strings.Contains(line, "Delete file or directory"))
+		isDeleteAction := strings.Contains(line, "Empty file or directory") ||
+			strings.Contains(line, "Delete file or directory")
+		isTrashAction := strings.Contains(line, "Trash file or directory")
+		isFound := isDeleteAction || isTrashAction
 
 		if ui.noDelete && isFound {
 			lines[i] += helpDisabledSuffix
 		} else if ui.noDeleteWithFilter && isFound {
 			lines[i] += " (disabled/filter)"
+		} else if isTrashAction && len(ui.trashCmd) == 0 {
+			lines[i] += helpDisabledSuffix
 		}
 
 		if ui.noSpawnShell && (strings.Contains(line, "Spawn shell in current directory") ||

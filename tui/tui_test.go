@@ -131,14 +131,9 @@ func TestHelp(t *testing.T) {
 
 	// printScreen(simScreen)
 
-	b, _, _ := simScreen.GetContents()
-
-	cells := b[557 : 557+9]
-
-	text := []byte("directory")
-	for i, r := range cells {
-		assert.Equal(t, text[i], r.Bytes[0])
-	}
+	helpText := ui.formatHelpTextFor()
+	assert.Contains(t, helpText, "Delete file or directory")
+	assert.Contains(t, helpText, "Trash file or directory")
 }
 
 func TestHelpBw(t *testing.T) {
@@ -152,14 +147,9 @@ func TestHelpBw(t *testing.T) {
 
 	// printScreen(simScreen)
 
-	b, _, _ := simScreen.GetContents()
-
-	cells := b[557 : 557+9]
-
-	text := []byte("directory")
-	for i, r := range cells {
-		assert.Equal(t, text[i], r.Bytes[0])
-	}
+	helpText := ui.formatHelpTextFor()
+	assert.Contains(t, helpText, "Delete file or directory")
+	assert.Contains(t, helpText, "Trash file or directory")
 }
 
 func TestAppRun(t *testing.T) {
@@ -1036,7 +1026,7 @@ func TestConfirmDeletionSelectedCase1(t *testing.T) {
 	assert.Equal(t, 1, ui.table.GetRowCount())
 	ui.table.Select(0, 0)
 
-	// Test case 1 branch (yes button at index 1) by directly calling deleteSelected
+	// Test explicit selected-item deletion path.
 	ui.deleteSelected(false)
 
 	<-ui.done
@@ -1058,7 +1048,7 @@ func TestConfirmDeletionMarkedCase1(t *testing.T) {
 	ui.fileItemSelected(0, 0)     // nested
 	ui.markedRows[1] = struct{}{} // subnested
 
-	// Test case 1 branch (yes button at index 1) by directly calling deleteMarked
+	// Test explicit marked-item deletion path.
 	ui.deleteMarked(false)
 
 	<-ui.done

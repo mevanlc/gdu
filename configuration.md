@@ -88,6 +88,10 @@ Ignore hidden directories (beginning with dot)
 
 Do not allow deletions
 
+#### `trash-cmd`
+
+Command to move selected items to trash. The command is split like a shell command line and enables the `t` hotkey in interactive mode.
+
 #### `no-view-file`
 
 Do not allow viewing file contents

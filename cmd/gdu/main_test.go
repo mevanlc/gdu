@@ -52,6 +52,28 @@ func TestInteractiveFlagCanBeSet(t *testing.T) {
 	}
 }
 
+func TestTrashCmdFlagRegistered(t *testing.T) {
+	flag := rootCmd.Flags().Lookup("trash-cmd")
+	if flag == nil {
+		t.Fatal("expected trash-cmd flag to be registered")
+	}
+}
+
+func TestTrashCmdFlagCanBeSet(t *testing.T) {
+	t.Cleanup(func() {
+		_ = rootCmd.Flags().Set("trash-cmd", "")
+	})
+
+	err := rootCmd.Flags().Set("trash-cmd", "trash --flag")
+	if err != nil {
+		t.Fatalf("expected setting trash-cmd flag to succeed: %v", err)
+	}
+
+	if af.TrashCmd != "trash --flag" {
+		t.Fatalf("expected TrashCmd to be set, got %q", af.TrashCmd)
+	}
+}
+
 func TestInitConfigMalformedSystemConfig(t *testing.T) {
 	// Write invalid YAML to a temp file and point systemConfigPath at it.
 	tmp := filepath.Join(t.TempDir(), "gdu.yaml")

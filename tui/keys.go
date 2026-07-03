@@ -49,7 +49,8 @@ func (ui *UI) keyPressed(key *tcell.EventKey) *tcell.EventKey {
 
 	if ui.pages.HasPage("progress") ||
 		ui.pages.HasPage("deleting") ||
-		ui.pages.HasPage("emptying") {
+		ui.pages.HasPage("emptying") ||
+		ui.pages.HasPage(actingTrash) {
 		// allow peeking at the results found so far during a scan
 		if key.Key() == tcell.KeyTab && ui.pages.HasPage("progress") {
 			ui.enterPreview()
@@ -429,6 +430,12 @@ func (ui *UI) handleMainActions(key *tcell.EventKey) *tcell.EventKey {
 			return nil
 		}
 		ui.handleDelete(true)
+	case 't':
+		if ui.isInArchive() {
+			ui.showErr("Trash is not supported in archives", nil)
+			return nil
+		}
+		ui.handleTrash()
 	case 'v':
 		if ui.isInArchive() {
 			ui.showErr("Viewing content is not supported in archives", nil)

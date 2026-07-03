@@ -304,6 +304,36 @@ func TestGuiNoSpawnShell(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestGuiTrashCmd(t *testing.T) {
+	fin := testdir.CreateTestDir()
+	defer fin()
+
+	out, err := runApp(
+		&Flags{LogFile: "/dev/null", TrashCmd: "trash --flag 'quoted arg'"},
+		[]string{"test_dir"},
+		true,
+		testdev.DevicesInfoGetterMock{},
+	)
+
+	assert.Empty(t, out)
+	assert.Nil(t, err)
+}
+
+func TestGuiTrashCmdInvalid(t *testing.T) {
+	fin := testdir.CreateTestDir()
+	defer fin()
+
+	out, err := runApp(
+		&Flags{LogFile: "/dev/null", TrashCmd: "trash 'unterminated"},
+		[]string{"test_dir"},
+		true,
+		testdev.DevicesInfoGetterMock{},
+	)
+
+	assert.Empty(t, out)
+	assert.ErrorContains(t, err, "parsing --trash-cmd")
+}
+
 func TestGuiDeleteInParallel(t *testing.T) {
 	fin := testdir.CreateTestDir()
 	defer fin()
