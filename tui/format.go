@@ -15,6 +15,7 @@ const (
 
 	defaultColor     = "[-::]"
 	defaultColorBold = "[::b]"
+	gitTrackedColor  = "[green::b]"
 )
 
 // getUsagePart returns the percentage (0-100) that the given item's size or
@@ -107,12 +108,17 @@ func (ui *UI) formatFileRow(item fs.Item, maxUsage, maxSize int64, marked, ignor
 		row += " "
 	}
 
+	tracked := ui.UseColors && !marked && !ignored && ui.IsGitTracked(item.GetPath(), item.IsDir())
 	if item.IsDir() {
-		if ui.UseColors && !marked && !ignored {
+		if tracked {
+			row += gitTrackedColor + "/"
+		} else if ui.UseColors && !marked && !ignored {
 			row += fmt.Sprintf("[%s::b]/", ui.resultRow.DirectoryColor)
 		} else {
 			row += defaultColorBold + "/"
 		}
+	} else if tracked {
+		row += gitTrackedColor
 	}
 	row += tview.Escape(item.GetName())
 	return row
@@ -190,7 +196,10 @@ func (ui *UI) formatCollapsedRow(collapsedPath *CollapsedPath, maxUsage, maxSize
 	}
 
 	// Always display as directory with special formatting for collapsed path
-	if ui.UseColors && !marked && !ignored {
+	tracked := ui.UseColors && !marked && !ignored && ui.IsGitTracked(item.GetPath(), true)
+	if tracked {
+		row += gitTrackedColor + "/"
+	} else if ui.UseColors && !marked && !ignored {
 		row += fmt.Sprintf("[%s::b]/", ui.resultRow.DirectoryColor)
 	} else {
 		row += defaultColorBold + "/"

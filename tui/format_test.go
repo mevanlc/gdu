@@ -2,12 +2,19 @@ package tui
 
 import (
 	"bytes"
+	"path/filepath"
 	"testing"
 
 	"github.com/dundee/gdu/v5/internal/testapp"
 	"github.com/dundee/gdu/v5/pkg/analyze"
 	"github.com/stretchr/testify/assert"
 )
+
+type trackedPathStub map[string]bool
+
+func (s trackedPathStub) IsTracked(path string, _ bool) bool {
+	return s[filepath.Clean(path)]
+}
 
 func TestFormatSize(t *testing.T) {
 	simScreen := testapp.CreateSimScreen()
@@ -76,6 +83,57 @@ func TestEscapeName(t *testing.T) {
 	}
 
 	assert.Contains(t, ui.formatFileRow(file, file.GetUsage(), file.GetSize(), false, false), "Aaa [red[] bbb")
+}
+
+func TestFormatFileRowColorsGitTrackedName(t *testing.T) {
+	simScreen := testapp.CreateSimScreen()
+	defer simScreen.Fini()
+
+	app := testapp.CreateMockedApp(true)
+	ui := CreateUI(app, simScreen, &bytes.Buffer{}, true, false, false, false)
+	dir := &analyze.Dir{File: &analyze.File{Name: "repo", Usage: 10}}
+	file := &analyze.File{Name: "tracked.txt", Parent: dir, Usage: 10}
+	trackedDir := &analyze.Dir{File: &analyze.File{Name: "tracked-dir", Parent: dir, Usage: 10}}
+	ui.SetGitTracker(trackedPathStub{
+		filepath.Clean(file.GetPath()):       true,
+		filepath.Clean(trackedDir.GetPath()): true,
+	})
+
+	fileRow := ui.formatFileRow(file, file.GetUsage(), file.GetSize(), false, false)
+	dirRow := ui.formatFileRow(trackedDir, trackedDir.GetUsage(), trackedDir.GetSize(), false, false)
+
+	assert.Contains(t, fileRow, "[green::b]tracked.txt")
+	assert.Contains(t, dirRow, "[green::b]/tracked-dir")
+}
+
+func TestFormatFileRowDoesNotOverrideMarkedColorWithGitColor(t *testing.T) {
+	simScreen := testapp.CreateSimScreen()
+	defer simScreen.Fini()
+
+	app := testapp.CreateMockedApp(true)
+	ui := CreateUI(app, simScreen, &bytes.Buffer{}, true, false, false, false)
+	dir := &analyze.Dir{File: &analyze.File{Name: "repo", Usage: 10}}
+	file := &analyze.File{Name: "tracked.txt", Parent: dir, Usage: 10}
+	ui.SetGitTracker(trackedPathStub{filepath.Clean(file.GetPath()): true})
+
+	row := ui.formatFileRow(file, file.GetUsage(), file.GetSize(), true, false)
+
+	assert.NotContains(t, row, gitTrackedColor)
+}
+
+func TestFormatFileRowDoesNotUseGitColorWhenColorsDisabled(t *testing.T) {
+	simScreen := testapp.CreateSimScreen()
+	defer simScreen.Fini()
+
+	app := testapp.CreateMockedApp(true)
+	ui := CreateUI(app, simScreen, &bytes.Buffer{}, false, false, false, false)
+	dir := &analyze.Dir{File: &analyze.File{Name: "repo", Usage: 10}}
+	file := &analyze.File{Name: "tracked.txt", Parent: dir, Usage: 10}
+	ui.SetGitTracker(trackedPathStub{filepath.Clean(file.GetPath()): true})
+
+	row := ui.formatFileRow(file, file.GetUsage(), file.GetSize(), false, false)
+
+	assert.NotContains(t, row, gitTrackedColor)
 }
 
 func TestMarked(t *testing.T) {

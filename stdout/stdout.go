@@ -25,6 +25,7 @@ type UI struct {
 	red         *color.Color
 	orange      *color.Color
 	blue        *color.Color
+	green       *color.Color
 	showItemCnt bool
 	top         int
 	depth       int
@@ -78,6 +79,7 @@ func CreateStdoutUI(
 	ui.red = color.New(color.FgRed).Add(color.Bold)
 	ui.orange = color.New(color.FgYellow).Add(color.Bold)
 	ui.blue = color.New(color.FgBlue).Add(color.Bold)
+	ui.green = color.New(color.FgGreen).Add(color.Bold)
 
 	if ui.top > 0 || ui.depth > 0 {
 		ui.Analyzer = analyze.CreateAnalyzer()
@@ -307,8 +309,18 @@ func (ui *UI) printTotalItem(file fs.Item) {
 		ui.output,
 		lineFormat,
 		ui.formatSize(size),
-		file.GetName(),
+		ui.formatItemName(file, file.GetName(), false),
 	)
+}
+
+func (ui *UI) formatItemName(file fs.Item, name string, colorDirectory bool) string {
+	if ui.UseColors && ui.IsGitTracked(file.GetPath(), file.IsDir()) {
+		return ui.green.Sprint(name)
+	}
+	if colorDirectory && file.IsDir() {
+		return ui.blue.Sprint(name)
+	}
+	return name
 }
 
 func (ui *UI) printItem(file fs.Item) {
@@ -336,8 +348,9 @@ func (ui *UI) printItem(file fs.Item) {
 
 	name := file.GetName()
 	if file.IsDir() {
-		name = ui.blue.Sprint("/" + file.GetName())
+		name = "/" + name
 	}
+	name = ui.formatItemName(file, name, true)
 
 	if ui.showItemCnt {
 		fmt.Fprintf(
@@ -375,17 +388,10 @@ func (ui *UI) printItemPath(file fs.Item) {
 		size = file.GetUsage()
 	}
 
-	if file.IsDir() {
-		fmt.Fprintf(ui.output,
-			lineFormat,
-			ui.formatSize(size),
-			ui.blue.Sprint(file.GetPath()))
-	} else {
-		fmt.Fprintf(ui.output,
-			lineFormat,
-			ui.formatSize(size),
-			file.GetPath())
-	}
+	fmt.Fprintf(ui.output,
+		lineFormat,
+		ui.formatSize(size),
+		ui.formatItemName(file, file.GetPath(), true))
 }
 
 func (ui *UI) printDirWithDepth(dir fs.Item, currentDepth int) {

@@ -48,6 +48,7 @@ Flags:
       --enable-profiling              Enable collection of profiling data and provide it on http://localhost:6060/debug/pprof/
   -E, --exclude-type strings          File types to exclude (e.g., --exclude-type yaml,json)
   -L, --follow-symlinks               Follow symlinks for files, i.e. show the size of the file to which symlink points to (symlinks to directories are not followed)
+      --git-colors                    Colorize Git-tracked files and directories
   -h, --help                          help for gdu
   -i, --ignore-dirs strings           Paths to ignore (separated by comma). Can be absolute or relative to current directory (default [/proc,/dev,/sys,/run])
   -I, --ignore-dirs-pattern strings   Path patterns to ignore (separated by comma)
@@ -111,6 +112,7 @@ Basic list of actions in interactive mode (show help modal for more):
     gdu -a                                # show apparent size instead of disk usage
     gdu --no-delete                       # prevent write operations
     gdu --trash-cmd 'trash'               # enable t hotkey to move selected items to trash
+    gdu --git-colors                       # show Git-tracked item names in green
     gdu --no-view-file                    # prevent viewing file contents
     gdu <some_dir_to_analyze>             # analyze given dir
     gdu -d                                # show all mounted disks

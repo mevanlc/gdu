@@ -83,6 +83,7 @@ func init() {
 	flags.BoolVarP(&af.ShowApparentSize, "show-apparent-size", "a", false, "Show apparent size")
 	flags.BoolVarP(&af.ShowRelativeSize, "show-relative-size", "B", false, "Show relative size")
 	flags.BoolVarP(&af.NoColor, "no-color", "c", false, "Do not use colorized output")
+	flags.BoolVar(&af.GitColors, "git-colors", false, "Colorize Git-tracked files and directories")
 	flags.BoolVarP(&af.ShowItemCount, "show-item-count", "C", false, "Show number of items in directory")
 	flags.BoolVarP(&af.ShowMTime, "show-mtime", "M", false, "Show latest mtime of items in directory")
 	flags.BoolVarP(&af.NonInteractive, "non-interactive", "n", false, "Do not run in interactive mode")

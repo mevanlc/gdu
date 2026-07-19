@@ -18,6 +18,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type trackedPathStub map[string]bool
+
+func (s trackedPathStub) IsTracked(path string, _ bool) bool {
+	return s[filepath.Clean(path)]
+}
+
 func init() {
 	log.SetLevel(log.WarnLevel)
 }
@@ -37,6 +43,27 @@ func TestAnalyzePath(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Contains(t, output.String(), "nested")
+}
+
+func TestFormatItemNameColorsGitTrackedItem(t *testing.T) {
+	ui := CreateStdoutUI(&bytes.Buffer{}, true, false, false, false, false, false, false, "", 0, false, 0)
+	ui.green.EnableColor()
+	dir := &analyze.Dir{File: &analyze.File{Name: "repo"}}
+	file := &analyze.File{Name: "tracked.txt", Parent: dir}
+	ui.SetGitTracker(trackedPathStub{filepath.Clean(file.GetPath()): true})
+
+	name := ui.formatItemName(file, file.GetName(), false)
+
+	assert.Contains(t, name, "\x1b[32;1mtracked.txt")
+}
+
+func TestFormatItemNameLeavesUntrackedFileUncolored(t *testing.T) {
+	ui := CreateStdoutUI(&bytes.Buffer{}, true, false, false, false, false, false, false, "", 0, false, 0)
+	dir := &analyze.Dir{File: &analyze.File{Name: "repo"}}
+	file := &analyze.File{Name: "untracked.txt", Parent: dir}
+	ui.SetGitTracker(trackedPathStub{})
+
+	assert.Equal(t, "untracked.txt", ui.formatItemName(file, file.GetName(), false))
 }
 
 func TestShowItemCountInNonInteractiveMode(t *testing.T) {

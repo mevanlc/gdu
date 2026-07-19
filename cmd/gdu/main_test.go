@@ -52,6 +52,21 @@ func TestInteractiveFlagCanBeSet(t *testing.T) {
 	}
 }
 
+func TestGitColorsFlagCanBeSet(t *testing.T) {
+	t.Cleanup(func() {
+		_ = rootCmd.Flags().Set("git-colors", "false")
+	})
+
+	err := rootCmd.Flags().Set("git-colors", "true")
+	if err != nil {
+		t.Fatalf("expected setting git-colors flag to succeed: %v", err)
+	}
+
+	if !af.GitColors {
+		t.Fatal("expected GitColors to be true after setting flag")
+	}
+}
+
 func TestTrashCmdFlagRegistered(t *testing.T) {
 	flag := rootCmd.Flags().Lookup("trash-cmd")
 	if flag == nil {

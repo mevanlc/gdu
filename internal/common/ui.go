@@ -21,6 +21,12 @@ type UI struct {
 	ShowApparentSize      bool
 	ShowRelativeSize      bool
 	FilteringFiles        bool
+	GitTracker            GitTracker
+}
+
+// GitTracker identifies paths represented by a Git index.
+type GitTracker interface {
+	IsTracked(path string, isDir bool) bool
 }
 
 // SetAnalyzer sets analyzer instance
@@ -47,6 +53,16 @@ func (ui *UI) SetTimeFilter(timeFilter TimeFilter) {
 // SetArchiveBrowsing sets whether browsing of zip/jar archives is enabled
 func (ui *UI) SetArchiveBrowsing(v bool) {
 	ui.Analyzer.SetArchiveBrowsing(v)
+}
+
+// SetGitTracker enables Git-tracked path detection for result rendering.
+func (ui *UI) SetGitTracker(tracker GitTracker) {
+	ui.GitTracker = tracker
+}
+
+// IsGitTracked reports whether path is represented by a Git index.
+func (ui *UI) IsGitTracked(path string, isDir bool) bool {
+	return ui.GitTracker != nil && ui.GitTracker.IsTracked(path, isDir)
 }
 
 // binary multiplies prefixes (IEC)

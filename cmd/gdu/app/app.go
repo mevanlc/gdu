@@ -22,6 +22,7 @@ import (
 	"github.com/dundee/gdu/v5/pkg/analyze"
 	"github.com/dundee/gdu/v5/pkg/device"
 	gfs "github.com/dundee/gdu/v5/pkg/fs"
+	"github.com/dundee/gdu/v5/pkg/gitcolor"
 	"github.com/dundee/gdu/v5/pkg/timefilter"
 	"github.com/dundee/gdu/v5/report"
 	"github.com/dundee/gdu/v5/stdout"
@@ -46,6 +47,7 @@ type UI interface {
 	SetTimeFilter(timeFilter common.TimeFilter)
 	SetArchiveBrowsing(value bool)
 	SetCollapsePath(value bool)
+	SetGitTracker(tracker common.GitTracker)
 	StartUILoop() error
 }
 
@@ -74,6 +76,7 @@ type Flags struct {
 	ShowItemCount      bool     `yaml:"show-item-count"`
 	ShowMTime          bool     `yaml:"show-mtime"`
 	NoColor            bool     `yaml:"no-color"`
+	GitColors          bool     `yaml:"git-colors"`
 	Mouse              bool     `yaml:"mouse"`
 	NonInteractive     bool     `yaml:"non-interactive"`
 	Interactive        bool     `yaml:"interactive"`
@@ -232,6 +235,9 @@ func (a *App) Run() error {
 	ui, err = a.createUI()
 	if err != nil {
 		return err
+	}
+	if a.Flags.GitColors && !a.Flags.NoColor {
+		ui.SetGitTracker(gitcolor.NewTracker())
 	}
 
 	if a.Flags.DbPath != "" {

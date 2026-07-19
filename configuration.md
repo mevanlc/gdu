@@ -60,6 +60,10 @@ Show number of items in directory
 
 Do not use colorized output
 
+#### `git-colors`
+
+Show Git-tracked file names and directories containing tracked files in green. This has no effect when `no-color` is enabled.
+
 #### `mouse`
 
 Use mouse
