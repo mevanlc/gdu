@@ -48,6 +48,10 @@ Use sequential scanning (intended for rotating HDDs)
 
 Show apparent size
 
+#### `stat-compressed`
+
+Use the allocated compressed size instead of the logical size for transparent-compressed files on supported filesystems. Currently APFS is supported. Uncompressed files and unsupported filesystems keep their logical sizes.
+
 #### `show-relative-size`
 
 Show relative size

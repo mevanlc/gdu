@@ -21,6 +21,7 @@ type UI struct {
 	ShowApparentSize      bool
 	ShowRelativeSize      bool
 	FilteringFiles        bool
+	StatCompressed        bool
 	GitTracker            GitTracker
 }
 
@@ -32,6 +33,7 @@ type GitTracker interface {
 // SetAnalyzer sets analyzer instance
 func (ui *UI) SetAnalyzer(a Analyzer) {
 	ui.Analyzer = a
+	a.SetStatCompressed(ui.StatCompressed)
 }
 
 // SetFollowSymlinks sets whether symlinks to files should be followed
@@ -53,6 +55,12 @@ func (ui *UI) SetTimeFilter(timeFilter TimeFilter) {
 // SetArchiveBrowsing sets whether browsing of zip/jar archives is enabled
 func (ui *UI) SetArchiveBrowsing(v bool) {
 	ui.Analyzer.SetArchiveBrowsing(v)
+}
+
+// SetStatCompressed controls whether supported filesystem compression is used for file sizes.
+func (ui *UI) SetStatCompressed(v bool) {
+	ui.StatCompressed = v
+	ui.Analyzer.SetStatCompressed(v)
 }
 
 // SetGitTracker enables Git-tracked path detection for result rendering.

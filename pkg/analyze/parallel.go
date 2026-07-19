@@ -128,7 +128,7 @@ func (a *ParallelAnalyzer) processDir(path string) *Dir {
 					file = &File{
 						Name:   name,
 						Flag:   getFlag(info),
-						Size:   info.Size(),
+						Size:   a.fileSize(entryPath, info),
 						Parent: dir,
 					}
 				} else {
@@ -147,7 +147,7 @@ func (a *ParallelAnalyzer) processDir(path string) *Dir {
 					file = &File{
 						Name:   name,
 						Flag:   getFlag(info),
-						Size:   info.Size(),
+						Size:   a.fileSize(entryPath, info),
 						Parent: dir,
 					}
 				} else {
@@ -158,7 +158,7 @@ func (a *ParallelAnalyzer) processDir(path string) *Dir {
 				file = &File{
 					Name:   name,
 					Flag:   getFlag(info),
-					Size:   info.Size(),
+					Size:   a.fileSize(entryPath, info),
 					Parent: dir,
 				}
 			}

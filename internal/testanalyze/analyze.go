@@ -93,6 +93,9 @@ func (a *MockedAnalyzer) SetTimeFilter(timeFilter common.TimeFilter) {}
 // SetArchiveBrowsing does nothing
 func (a *MockedAnalyzer) SetArchiveBrowsing(v bool) {}
 
+// SetStatCompressed does nothing
+func (a *MockedAnalyzer) SetStatCompressed(v bool) {}
+
 // SetFileTypeFilter does nothing
 func (a *MockedAnalyzer) SetFileTypeFilter(fileTypeFilter common.ShouldFileBeIgnored) {}
 

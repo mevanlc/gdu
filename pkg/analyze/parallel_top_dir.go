@@ -116,7 +116,7 @@ func (a *TopDirAnalyzer) AnalyzeDir(
 			file := SimpleFile{
 				Name: name,
 				Flag: getFlag(info),
-				Size: info.Size(),
+				Size: a.fileSize(entryPath, info),
 			}
 
 			usage, mli := getPlatformSpecificUsageAndMli(info)
@@ -233,7 +233,7 @@ func (a *TopDirAnalyzer) processSubDir(path string, topDir *TopDir) {
 			}
 
 			totalUsage += usage
-			totalSize += info.Size()
+			totalSize += a.fileSize(entryPath, info)
 		}
 	}
 

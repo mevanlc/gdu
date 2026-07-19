@@ -84,6 +84,7 @@ Flags:
   -B, --show-relative-size            Show relative size
       --si                            Show sizes with decimal SI prefixes (kB, MB, GB) instead of binary prefixes (KiB, MiB, GiB)
       --since string                  Include files with mtime >= WHEN. WHEN accepts RFC3339 timestamp (e.g., 2025-08-11T01:00:00-07:00) or date only YYYY-MM-DD (calendar-day compare; includes the whole day)
+      --stat-compressed               Use compressed file sizes on supported filesystems
   -s, --summarize                     Show only a total in non-interactive mode
       --trash-cmd string              Command to move selected items to trash (enables t hotkey)
   -t, --top int                       Show only top X largest files in non-interactive mode
@@ -113,6 +114,7 @@ Basic list of actions in interactive mode (show help modal for more):
     gdu --no-delete                       # prevent write operations
     gdu --trash-cmd 'trash'               # enable t hotkey to move selected items to trash
     gdu --git-colors                       # show Git-tracked item names in green
+    gdu -a --stat-compressed               # show compressed APFS sizes instead of logical sizes
     gdu --no-view-file                    # prevent viewing file contents
     gdu <some_dir_to_analyze>             # analyze given dir
     gdu -d                                # show all mounted disks

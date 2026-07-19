@@ -86,6 +86,7 @@ func init() {
 	flags.BoolVar(&af.GitColors, "git-colors", false, "Colorize Git-tracked files and directories")
 	flags.BoolVarP(&af.ShowItemCount, "show-item-count", "C", false, "Show number of items in directory")
 	flags.BoolVarP(&af.ShowMTime, "show-mtime", "M", false, "Show latest mtime of items in directory")
+	flags.BoolVar(&af.StatCompressed, "stat-compressed", false, "Use compressed file sizes on supported filesystems")
 	flags.BoolVarP(&af.NonInteractive, "non-interactive", "n", false, "Do not run in interactive mode")
 	flags.BoolVar(&af.Interactive, "interactive", false, "Force interactive mode even when output is not a TTY")
 	flags.BoolVarP(&af.NoProgress, "no-progress", "p", false, "Do not show progress in non-interactive mode")

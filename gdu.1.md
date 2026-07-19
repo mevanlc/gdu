@@ -78,6 +78,8 @@ non-interactive mode
 
 **-a**, **\--show-apparent-size**\[=false\] Show apparent size
 
+**\--stat-compressed**\[=false\] Use the allocated compressed size instead of the logical size for transparent-compressed files on supported filesystems (currently APFS)
+
 **-C**, **\--show-item-count**\[=false\] Show number of items in directory
 
 **-k**, **\--show-in-kib**\[=false\] Show sizes in KiB (or kB with --si) in non-interactive mode

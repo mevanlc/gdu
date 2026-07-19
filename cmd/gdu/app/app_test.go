@@ -684,6 +684,7 @@ func (m *uiTimeFilterMock) SetTimeFilter(timeFilter common.TimeFilter) {
 }
 func (m *uiTimeFilterMock) SetArchiveBrowsing(value bool)           {}
 func (m *uiTimeFilterMock) SetCollapsePath(value bool)              {}
+func (m *uiTimeFilterMock) SetStatCompressed(value bool)            {}
 func (m *uiTimeFilterMock) SetGitTracker(tracker common.GitTracker) {}
 func (m *uiTimeFilterMock) StartUILoop() error                      { return nil }
 

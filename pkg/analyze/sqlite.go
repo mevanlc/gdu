@@ -1015,7 +1015,7 @@ func (a *SqliteAnalyzer) processFile(entryPath, name string, f os.DirEntry) (sta
 		}
 	}
 
-	fileSize := info.Size()
+	fileSize := a.fileSize(entryPath, info)
 	fileUsage, fileMli := getSyscallStats(info)
 	fileFlag := getFlag(info)
 

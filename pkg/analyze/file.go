@@ -100,9 +100,18 @@ func (f *File) alreadyCounted(linkedItems fs.HardLinkedItems) bool {
 
 // CreateFileItem creates a File from an os.FileInfo with correct platform-specific attributes
 func CreateFileItem(name string, info os.FileInfo) *File {
+	return createFileItem(name, info.Size(), info)
+}
+
+// CreateStatCompressedFileItem creates a File using compressed size metadata when supported.
+func CreateStatCompressedFileItem(name, path string, info os.FileInfo) *File {
+	return createFileItem(name, statCompressedFileSize(path, info), info)
+}
+
+func createFileItem(name string, size int64, info os.FileInfo) *File {
 	file := &File{
 		Name: name,
-		Size: info.Size(),
+		Size: size,
 		Flag: getFlag(info),
 	}
 	setPlatformSpecificAttrs(file, info)

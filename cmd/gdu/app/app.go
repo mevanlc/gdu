@@ -47,6 +47,7 @@ type UI interface {
 	SetTimeFilter(timeFilter common.TimeFilter)
 	SetArchiveBrowsing(value bool)
 	SetCollapsePath(value bool)
+	SetStatCompressed(value bool)
 	SetGitTracker(tracker common.GitTracker)
 	StartUILoop() error
 }
@@ -75,6 +76,7 @@ type Flags struct {
 	ShowVersion        bool     `yaml:"-"`
 	ShowItemCount      bool     `yaml:"show-item-count"`
 	ShowMTime          bool     `yaml:"show-mtime"`
+	StatCompressed     bool     `yaml:"stat-compressed"`
 	NoColor            bool     `yaml:"no-color"`
 	GitColors          bool     `yaml:"git-colors"`
 	Mouse              bool     `yaml:"mouse"`
@@ -261,6 +263,9 @@ func (a *App) Run() error {
 	}
 	if a.Flags.SequentialScanning {
 		ui.SetAnalyzer(analyze.CreateSeqAnalyzer())
+	}
+	if a.Flags.StatCompressed {
+		ui.SetStatCompressed(true)
 	}
 	if a.Flags.FollowSymlinks {
 		ui.SetFollowSymlinks(true)

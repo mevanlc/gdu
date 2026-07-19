@@ -41,11 +41,21 @@ func TestSetEnableArchiveBrowsing(t *testing.T) {
 	assert.Equal(t, true, ui.Analyzer.(*MockedAnalyzer).ArchiveBrowsing)
 }
 
+func TestSetStatCompressed(t *testing.T) {
+	ui := UI{Analyzer: &MockedAnalyzer{}}
+
+	ui.SetStatCompressed(true)
+
+	assert.True(t, ui.StatCompressed)
+	assert.True(t, ui.Analyzer.(*MockedAnalyzer).StatCompressed)
+}
+
 func TestSetAnalyzer(t *testing.T) {
-	ui := UI{}
+	ui := UI{StatCompressed: true}
 	a := &MockedAnalyzer{}
 	ui.SetAnalyzer(a)
 	assert.Equal(t, a, ui.Analyzer)
+	assert.True(t, a.StatCompressed)
 }
 
 func TestSetTimeFilter(t *testing.T) {
@@ -59,6 +69,7 @@ type MockedAnalyzer struct {
 	FollowSymlinks  bool
 	ShowAnnexedSize bool
 	ArchiveBrowsing bool
+	StatCompressed  bool
 }
 
 // SetFileTypeFilter sets the file type filter function
@@ -104,4 +115,9 @@ func (a *MockedAnalyzer) SetTimeFilter(timeFilter TimeFilter) {}
 // SetArchiveBrowsing sets EnableArchiveBrowsing
 func (a *MockedAnalyzer) SetArchiveBrowsing(v bool) {
 	a.ArchiveBrowsing = v
+}
+
+// SetStatCompressed records the compressed-size mode.
+func (a *MockedAnalyzer) SetStatCompressed(v bool) {
+	a.StatCompressed = v
 }

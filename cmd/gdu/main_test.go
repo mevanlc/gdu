@@ -67,6 +67,21 @@ func TestGitColorsFlagCanBeSet(t *testing.T) {
 	}
 }
 
+func TestStatCompressedFlagCanBeSet(t *testing.T) {
+	t.Cleanup(func() {
+		_ = rootCmd.Flags().Set("stat-compressed", "false")
+	})
+
+	err := rootCmd.Flags().Set("stat-compressed", "true")
+	if err != nil {
+		t.Fatalf("expected setting stat-compressed flag to succeed: %v", err)
+	}
+
+	if !af.StatCompressed {
+		t.Fatal("expected StatCompressed to be true after setting flag")
+	}
+}
+
 func TestTrashCmdFlagRegistered(t *testing.T) {
 	flag := rootCmd.Flags().Lookup("trash-cmd")
 	if flag == nil {

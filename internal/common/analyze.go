@@ -28,6 +28,7 @@ type Analyzer interface {
 	SetShowAnnexedSize(bool)
 	SetTimeFilter(timeFilter TimeFilter)
 	SetArchiveBrowsing(bool)
+	SetStatCompressed(bool)
 	SetFileTypeFilter(filter ShouldFileBeIgnored)
 	GetDone() SignalGroup
 	GetProgress() CurrentProgress

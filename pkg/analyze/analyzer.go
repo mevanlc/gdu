@@ -1,6 +1,7 @@
 package analyze
 
 import (
+	"os"
 	"sync/atomic"
 	"time"
 
@@ -24,6 +25,7 @@ type BaseAnalyzer struct {
 	gitAnnexedSize          bool
 	matchesTimeFilterFn     common.TimeFilter
 	archiveBrowsing         bool
+	statCompressed          bool
 	progressTicker          *time.Ticker
 }
 
@@ -76,6 +78,18 @@ func (a *BaseAnalyzer) SetTimeFilter(matchesTimeFilterFn common.TimeFilter) {
 // SetArchiveBrowsing sets whether browsing of zip/jar/tar archives is enabled
 func (a *BaseAnalyzer) SetArchiveBrowsing(v bool) {
 	a.archiveBrowsing = v
+}
+
+// SetStatCompressed controls whether compressed sizes replace logical sizes on supported filesystems.
+func (a *BaseAnalyzer) SetStatCompressed(v bool) {
+	a.statCompressed = v
+}
+
+func (a *BaseAnalyzer) fileSize(path string, info os.FileInfo) int64 {
+	if !a.statCompressed {
+		return info.Size()
+	}
+	return statCompressedFileSize(path, info)
 }
 
 // SetFileTypeFilter sets the file type filter function

@@ -198,6 +198,9 @@ func (ui *UI) AnalyzePath(path string, _ fs.Item) error {
 	info, err := os.Stat(path)
 	if err == nil && info.Mode().IsRegular() {
 		file := analyze.CreateFileItem(filepath.Base(path), info)
+		if ui.StatCompressed {
+			file = analyze.CreateStatCompressedFileItem(filepath.Base(path), path, info)
+		}
 		ui.printTotalItem(file)
 		return nil
 	}

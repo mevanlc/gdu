@@ -153,7 +153,7 @@ func (a *StoredAnalyzer) processDir(path string) *StoredDir {
 					file = &File{
 						Name:   name,
 						Flag:   getFlag(info),
-						Size:   info.Size(),
+						Size:   a.fileSize(entryPath, info),
 						Parent: parent,
 					}
 				} else {
@@ -170,7 +170,7 @@ func (a *StoredAnalyzer) processDir(path string) *StoredDir {
 				file = &File{
 					Name:   name,
 					Flag:   getFlag(info),
-					Size:   info.Size(),
+					Size:   a.fileSize(entryPath, info),
 					Parent: parent,
 				}
 			}

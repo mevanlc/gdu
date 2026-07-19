@@ -128,7 +128,7 @@ func (a *ParallelStableOrderAnalyzer) processDir(path string) *Dir {
 			file = &File{
 				Name:   name,
 				Flag:   getFlag(info),
-				Size:   info.Size(),
+				Size:   a.fileSize(entryPath, info),
 				Parent: dir,
 			}
 			setPlatformSpecificAttrs(file, info)

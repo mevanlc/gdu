@@ -114,7 +114,7 @@ func (a *SequentialAnalyzer) processDir(path string) *Dir {
 					file = &File{
 						Name:   name,
 						Flag:   getFlag(info),
-						Size:   info.Size(),
+						Size:   a.fileSize(entryPath, info),
 						Parent: dir,
 					}
 				} else {
@@ -133,7 +133,7 @@ func (a *SequentialAnalyzer) processDir(path string) *Dir {
 					file = &File{
 						Name:   name,
 						Flag:   getFlag(info),
-						Size:   info.Size(),
+						Size:   a.fileSize(entryPath, info),
 						Parent: dir,
 					}
 				} else {
@@ -144,7 +144,7 @@ func (a *SequentialAnalyzer) processDir(path string) *Dir {
 				file = &File{
 					Name:   name,
 					Flag:   getFlag(info),
-					Size:   info.Size(),
+					Size:   a.fileSize(entryPath, info),
 					Parent: dir,
 				}
 			}
