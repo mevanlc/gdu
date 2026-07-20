@@ -106,6 +106,71 @@ func TestLeftRightKeyWhileConfirm(t *testing.T) {
 	assert.Equal(t, tcell.KeyRight, key.Key())
 }
 
+func TestYesNoKeysAnswerConfirmation(t *testing.T) {
+	tests := []struct {
+		name           string
+		buttons        []string
+		yesButtonIndex int
+		noButtonIndex  int
+		key            rune
+		wantAnswer     string
+	}{
+		{
+			name:           "yes key with yes first",
+			buttons:        []string{"yes", "no", "don't ask me again"},
+			yesButtonIndex: 0,
+			noButtonIndex:  1,
+			key:            'y',
+			wantAnswer:     "yes",
+		},
+		{
+			name:           "no key with yes first",
+			buttons:        []string{"yes", "no", "don't ask me again"},
+			yesButtonIndex: 0,
+			noButtonIndex:  1,
+			key:            'n',
+			wantAnswer:     "no",
+		},
+		{
+			name:           "yes key with no first",
+			buttons:        []string{"no", "yes", "don't ask me again"},
+			yesButtonIndex: 1,
+			noButtonIndex:  0,
+			key:            'y',
+			wantAnswer:     "yes",
+		},
+		{
+			name:           "no key with no first",
+			buttons:        []string{"no", "yes", "don't ask me again"},
+			yesButtonIndex: 1,
+			noButtonIndex:  0,
+			key:            'n',
+			wantAnswer:     "no",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var answer string
+			modal := tview.NewModal().
+				AddButtons(tt.buttons).
+				SetDoneFunc(func(_ int, buttonLabel string) {
+					answer = buttonLabel
+				})
+			setYesNoKeys(modal, tt.yesButtonIndex, tt.noButtonIndex)
+
+			app := tview.NewApplication()
+			app.SetFocus(modal)
+			modal.InputHandler()(
+				tcell.NewEventKey(tcell.KeyRune, tt.key, tcell.ModNone),
+				func(primitive tview.Primitive) { app.SetFocus(primitive) },
+			)
+
+			assert.Equal(t, tt.wantAnswer, answer)
+		})
+	}
+}
+
 func TestMoveLeftRight(t *testing.T) {
 	origWD, err := os.Getwd()
 	assert.Nil(t, err)

@@ -136,6 +136,7 @@ func (ui *UI) confirmDeletionMarked(shouldEmpty bool) {
 			}
 			ui.pages.RemovePage("confirm")
 		})
+	setYesNoKeys(modal, 0, 1)
 
 	if !ui.UseColors {
 		modal.SetBackgroundColor(tcell.ColorGray)

@@ -112,6 +112,21 @@ func (ui *UI) handleConfirmation(key *tcell.EventKey) *tcell.EventKey {
 	return key
 }
 
+func setYesNoKeys(modal *tview.Modal, yesButtonIndex, noButtonIndex int) {
+	modal.SetInputCapture(func(key *tcell.EventKey) *tcell.EventKey {
+		switch key.Rune() {
+		case 'y':
+			modal.SetFocus(yesButtonIndex)
+			return tcell.NewEventKey(tcell.KeyEnter, 0, tcell.ModNone)
+		case 'n':
+			modal.SetFocus(noButtonIndex)
+			return tcell.NewEventKey(tcell.KeyEnter, 0, tcell.ModNone)
+		default:
+			return key
+		}
+	})
+}
+
 func (ui *UI) handleInfoPageEvents(key *tcell.EventKey) *tcell.EventKey {
 	if ui.pages.HasPage("info") {
 		switch key.Rune() {
@@ -240,6 +255,7 @@ func (ui *UI) confirmQuitDialog(printCurrentDirPath bool) {
 				ui.doQuit(printCurrentDirPath)
 			}
 		})
+	setYesNoKeys(modal, 1, 0)
 
 	if !ui.UseColors {
 		modal.SetBackgroundColor(tcell.ColorGray)
