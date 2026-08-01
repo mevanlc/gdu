@@ -12,12 +12,12 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/dundee/gdu/v5/internal/common"
-	"github.com/dundee/gdu/v5/pkg/analyze"
-	"github.com/dundee/gdu/v5/pkg/device"
-	"github.com/dundee/gdu/v5/pkg/fs"
-	"github.com/dundee/gdu/v5/pkg/remove"
-	"github.com/dundee/gdu/v5/pkg/timefilter"
+	"github.com/mevanlc/gdu/v5/internal/common"
+	"github.com/mevanlc/gdu/v5/pkg/analyze"
+	"github.com/mevanlc/gdu/v5/pkg/device"
+	"github.com/mevanlc/gdu/v5/pkg/fs"
+	"github.com/mevanlc/gdu/v5/pkg/remove"
+	"github.com/mevanlc/gdu/v5/pkg/timefilter"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )

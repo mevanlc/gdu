@@ -7,8 +7,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/dundee/gdu/v5/internal/testdir"
-	"github.com/dundee/gdu/v5/pkg/analyze"
+	"github.com/mevanlc/gdu/v5/internal/testdir"
+	"github.com/mevanlc/gdu/v5/pkg/analyze"
 	"github.com/stretchr/testify/assert"
 )
 

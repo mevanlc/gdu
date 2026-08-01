@@ -4,9 +4,9 @@ Release:        1
 Summary:        Pretty fast disk usage analyzer written in Go
 
 License:        MIT
-URL:            https://github.com/dundee/gdu
+URL:            https://github.com/mevanlc/gdu
 
-Source0:        https://github.com/dundee/gdu/archive/refs/tags/v%{version}.tar.gz
+Source0:        https://github.com/mevanlc/gdu/archive/refs/tags/v%{version}.tar.gz
 
 BuildRequires:  golang
 BuildRequires:  systemd-rpm-macros
@@ -31,10 +31,10 @@ GO111MODULE=on CGO_ENABLED=0 go build \
 -modcacherw \
 -ldflags \
 "-s -w \
--X 'github.com/dundee/gdu/v5/build.Version=v%{version}' \
--X 'github.com/dundee/gdu/v5/build.User=$(id -u -n)' \
--X 'github.com/dundee/gdu/v5/build.Time=$(LC_ALL=en_US.UTF-8 date)'" \
--o %{name} github.com/dundee/gdu/v5/cmd/gdu
+-X 'github.com/mevanlc/gdu/v5/build.Version=v%{version}' \
+-X 'github.com/mevanlc/gdu/v5/build.User=$(id -u -n)' \
+-X 'github.com/mevanlc/gdu/v5/build.Time=$(LC_ALL=en_US.UTF-8 date)'" \
+-o %{name} github.com/mevanlc/gdu/v5/cmd/gdu
 
 %install
 rm -rf $RPM_BUILD_ROOT

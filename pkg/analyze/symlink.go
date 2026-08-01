@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/dundee/gdu/v5/pkg/annex"
+	"github.com/mevanlc/gdu/v5/pkg/annex"
 )
 
 func followSymlink(path string, gitAnnexedSize bool) (tInfo os.FileInfo, err error) {

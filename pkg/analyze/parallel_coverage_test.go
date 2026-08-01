@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dundee/gdu/v5/internal/testdir"
+	"github.com/mevanlc/gdu/v5/internal/testdir"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -5,8 +5,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/dundee/gdu/v5/internal/common"
-	"github.com/dundee/gdu/v5/pkg/path"
+	"github.com/mevanlc/gdu/v5/internal/common"
+	"github.com/mevanlc/gdu/v5/pkg/path"
 )
 
 func (ui *UI) updateProgress(analyzer common.Analyzer, doneChan common.SignalGroup) {

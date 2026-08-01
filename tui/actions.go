@@ -18,11 +18,11 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
-	"github.com/dundee/gdu/v5/build"
-	"github.com/dundee/gdu/v5/pkg/analyze"
-	"github.com/dundee/gdu/v5/pkg/device"
-	"github.com/dundee/gdu/v5/pkg/fs"
-	"github.com/dundee/gdu/v5/report"
+	"github.com/mevanlc/gdu/v5/build"
+	"github.com/mevanlc/gdu/v5/pkg/analyze"
+	"github.com/mevanlc/gdu/v5/pkg/device"
+	"github.com/mevanlc/gdu/v5/pkg/fs"
+	"github.com/mevanlc/gdu/v5/report"
 )
 
 const (

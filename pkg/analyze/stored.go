@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dundee/gdu/v5/internal/common"
-	"github.com/dundee/gdu/v5/pkg/fs"
+	"github.com/mevanlc/gdu/v5/internal/common"
+	"github.com/mevanlc/gdu/v5/pkg/fs"
 	log "github.com/sirupsen/logrus"
 )
 

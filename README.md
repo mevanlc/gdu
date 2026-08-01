@@ -3,7 +3,7 @@
 <img src="./gdu.png" alt="Gdu " width="200" align="right">
 
 [![Codecov](https://codecov.io/gh/dundee/gdu/branch/master/graph/badge.svg)](https://codecov.io/gh/dundee/gdu)
-[![Go Report Card](https://goreportcard.com/badge/github.com/dundee/gdu)](https://goreportcard.com/report/github.com/dundee/gdu)
+[![Go Report Card](https://goreportcard.com/badge/github.com/mevanlc/gdu)](https://goreportcard.com/report/github.com/mevanlc/gdu)
 [![Maintainability](https://api.codeclimate.com/v1/badges/30d793274607f599e658/maintainability)](https://codeclimate.com/github/dundee/gdu/maintainability)
 [![CodeScene Code Health](https://codescene.io/projects/13129/status-badges/code-health)](https://codescene.io/projects/13129)
 
@@ -20,11 +20,11 @@ However HDDs work as well, but the performance gain is not so huge.
 
 ## Installation
 
-Head for the [releases page](https://github.com/dundee/gdu/releases) and download the binary for your system.
+Head for the [releases page](https://github.com/mevanlc/gdu/releases) and download the binary for your system.
 
 Using curl:
 
-    curl -L https://github.com/dundee/gdu/releases/latest/download/gdu_linux_amd64.tgz | tar xz
+    curl -L https://github.com/mevanlc/gdu/releases/latest/download/gdu_linux_amd64.tgz | tar xz
     chmod +x gdu_linux_amd64
     mv gdu_linux_amd64 /usr/bin/gdu
 

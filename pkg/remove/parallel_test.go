@@ -5,9 +5,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/dundee/gdu/v5/internal/testdir"
-	"github.com/dundee/gdu/v5/pkg/analyze"
-	"github.com/dundee/gdu/v5/pkg/fs"
+	"github.com/mevanlc/gdu/v5/internal/testdir"
+	"github.com/mevanlc/gdu/v5/pkg/analyze"
+	"github.com/mevanlc/gdu/v5/pkg/fs"
 )
 
 func TestRemoveFileParallel(t *testing.T) {

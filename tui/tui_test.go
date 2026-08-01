@@ -10,13 +10,13 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/dundee/gdu/v5/internal/testanalyze"
-	"github.com/dundee/gdu/v5/internal/testapp"
-	"github.com/dundee/gdu/v5/internal/testdev"
-	"github.com/dundee/gdu/v5/internal/testdir"
-	"github.com/dundee/gdu/v5/pkg/analyze"
-	"github.com/dundee/gdu/v5/pkg/device"
-	"github.com/dundee/gdu/v5/pkg/fs"
+	"github.com/mevanlc/gdu/v5/internal/testanalyze"
+	"github.com/mevanlc/gdu/v5/internal/testapp"
+	"github.com/mevanlc/gdu/v5/internal/testdev"
+	"github.com/mevanlc/gdu/v5/internal/testdir"
+	"github.com/mevanlc/gdu/v5/pkg/analyze"
+	"github.com/mevanlc/gdu/v5/pkg/device"
+	"github.com/mevanlc/gdu/v5/pkg/fs"
 	"github.com/gdamore/tcell/v2"
 	"github.com/stretchr/testify/assert"
 )
