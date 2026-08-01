@@ -1,6 +1,6 @@
 NAME := gdu
 MAJOR_VER := v5
-PACKAGE := github.com/dundee/$(NAME)/$(MAJOR_VER)
+PACKAGE := github.com/mevanlc/$(NAME)/$(MAJOR_VER)
 CMD_GDU := cmd/gdu
 VERSION := $(shell git describe --tags 2>/dev/null)
 NAMEVER := $(NAME)-$(subst v,,$(VERSION))
@@ -41,7 +41,7 @@ build-static:
 
 build-docker:
 	@echo "Version: " $(VERSION)
-	docker build . --tag ghcr.io/dundee/gdu:$(VERSION)
+	docker build . --tag ghcr.io/mevanlc/gdu:$(VERSION)
 
 build-all:
 	@echo "Version: " $(VERSION)

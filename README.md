@@ -2,9 +2,7 @@
 
 <img src="./gdu.png" alt="Gdu " width="200" align="right">
 
-[![Codecov](https://codecov.io/gh/dundee/gdu/branch/master/graph/badge.svg)](https://codecov.io/gh/dundee/gdu)
 [![Go Report Card](https://goreportcard.com/badge/github.com/mevanlc/gdu)](https://goreportcard.com/report/github.com/mevanlc/gdu)
-[![Maintainability](https://api.codeclimate.com/v1/badges/30d793274607f599e658/maintainability)](https://codeclimate.com/github/dundee/gdu/maintainability)
 [![CodeScene Code Health](https://codescene.io/projects/13129/status-badges/code-health)](https://codescene.io/projects/13129)
 
 Pretty fast disk usage analyzer written in Go.
@@ -29,10 +27,6 @@ Using curl:
     mv gdu_linux_amd64 /usr/bin/gdu
 
 See the [installation page](./INSTALL.md) for other ways how to install Gdu to your system.
-
-Or you can use Gdu directly via Docker:
-
-    docker run --rm --init --interactive --tty --privileged --volume /:/mnt/root ghcr.io/dundee/gdu /mnt/root
 
 ## Usage
 

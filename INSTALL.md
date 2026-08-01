@@ -47,11 +47,7 @@
 
     go install github.com/mevanlc/gdu/v5/cmd/gdu@latest
 
-[Winget](https://github.com/microsoft/winget-pkgs/tree/master/manifests/d/dundee/gdu) (for Windows users):
-
-    winget install gdu
-
-You can either run it as `gdu_windows_amd64.exe` or
+On Windows you can either run it as `gdu_windows_amd64.exe` or
 * add an alias with `Doskey`.
 * add `alias gdu="gdu_windows_amd64.exe"` to your `~/.bashrc` file if using Git Bash to run it as `gdu`.
 

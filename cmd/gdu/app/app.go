@@ -17,15 +17,16 @@ import (
 	"github.com/rivo/tview"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/dundee/gdu/v5/build"
-	"github.com/dundee/gdu/v5/internal/common"
-	"github.com/dundee/gdu/v5/pkg/analyze"
-	"github.com/dundee/gdu/v5/pkg/device"
-	gfs "github.com/dundee/gdu/v5/pkg/fs"
-	"github.com/dundee/gdu/v5/pkg/timefilter"
-	"github.com/dundee/gdu/v5/report"
-	"github.com/dundee/gdu/v5/stdout"
-	"github.com/dundee/gdu/v5/tui"
+	"github.com/mevanlc/gdu/v5/build"
+	"github.com/mevanlc/gdu/v5/internal/common"
+	"github.com/mevanlc/gdu/v5/pkg/analyze"
+	"github.com/mevanlc/gdu/v5/pkg/device"
+	gfs "github.com/mevanlc/gdu/v5/pkg/fs"
+	"github.com/mevanlc/gdu/v5/pkg/gitcolor"
+	"github.com/mevanlc/gdu/v5/pkg/timefilter"
+	"github.com/mevanlc/gdu/v5/report"
+	"github.com/mevanlc/gdu/v5/stdout"
+	"github.com/mevanlc/gdu/v5/tui"
 )
 
 // UI is common interface for both terminal UI and text output
@@ -46,6 +47,8 @@ type UI interface {
 	SetTimeFilter(timeFilter common.TimeFilter)
 	SetArchiveBrowsing(value bool)
 	SetCollapsePath(value bool)
+	SetStatCompressed(value bool)
+	SetGitTracker(tracker common.GitTracker)
 	StartUILoop() error
 }
 
@@ -73,7 +76,9 @@ type Flags struct {
 	ShowVersion        bool     `yaml:"-"`
 	ShowItemCount      bool     `yaml:"show-item-count"`
 	ShowMTime          bool     `yaml:"show-mtime"`
+	StatCompressed     bool     `yaml:"stat-compressed"`
 	NoColor            bool     `yaml:"no-color"`
+	GitColors          bool     `yaml:"git-colors"`
 	Mouse              bool     `yaml:"mouse"`
 	NonInteractive     bool     `yaml:"non-interactive"`
 	Interactive        bool     `yaml:"interactive"`
@@ -233,6 +238,9 @@ func (a *App) Run() error {
 	if err != nil {
 		return err
 	}
+	if a.Flags.GitColors && !a.Flags.NoColor {
+		ui.SetGitTracker(gitcolor.NewTracker())
+	}
 
 	if a.Flags.DbPath != "" {
 		if !a.Flags.ReadFromStorage {
@@ -255,6 +263,9 @@ func (a *App) Run() error {
 	}
 	if a.Flags.SequentialScanning {
 		ui.SetAnalyzer(analyze.CreateSeqAnalyzer())
+	}
+	if a.Flags.StatCompressed {
+		ui.SetStatCompressed(true)
 	}
 	if a.Flags.FollowSymlinks {
 		ui.SetFollowSymlinks(true)
