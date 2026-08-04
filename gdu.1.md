@@ -92,6 +92,10 @@ non-interactive mode
 
 **\--collapse-path**\[=false\] Collapse single-child directory chains
 
+**\--collector**\[=false\] Keep marked items across directories in a collector panel
+
+**\--collector-split**="vertical" Collector panel split: h, horizontal, v, or vertical
+
 **\--mouse**\[=false\] Use mouse
 
 **\--si**\[=false\] Show sizes with decimal SI prefixes (kB, MB, GB) instead of binary prefixes (KiB, MiB, GiB)

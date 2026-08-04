@@ -36,6 +36,8 @@ See the [installation page](./INSTALL.md) for other ways how to install Gdu to y
 Flags:
       --archive-browsing              Enable browsing of zip/jar/tar archives (tar, tar.gz, tar.bz2, tar.xz)
       --collapse-path                 Collapse single-child directory chains
+      --collector                     Keep marked items across directories in a collector panel
+      --collector-split string        Collector panel split: h, horizontal, v, or vertical (default "vertical")
       --config-file string            Read config from file (default is $HOME/.gdu.yaml)
   -D, --db string                     Store analysis in database (*.sqlite for SQLite, *.badger for BadgerDB)
       --depth int                     Show directory structure up to specified depth in non-interactive mode (0 means the flag is ignored)
@@ -101,12 +103,16 @@ Basic list of actions in interactive mode (show help modal for more):
   ?                                   Show help modal
 ```
 
+With `--collector`, marked items persist while navigating and appear in a split panel. Press `Tab` to move focus between the directory list and collector. In the collector, `Space` or `d` removes one item and `D` removes all items. Delete, empty, and trash actions invoked from the directory list apply to every collected item. Pressing `p` enables printing the collector's contents at exit; the paths printed are those still collected when gdu exits.
+
 ## Examples
 
     gdu                                   # analyze current dir
     gdu -a                                # show apparent size instead of disk usage
     gdu --no-delete                       # prevent write operations
     gdu --trash-cmd 'trash'               # enable t hotkey to move selected items to trash
+    gdu --collector                       # keep marks across directories in a vertical split
+    gdu --collector --collector-split h   # show the collector below the directory list
     gdu --git-colors                       # show Git-tracked item names in green
     gdu -a --stat-compressed               # show compressed APFS sizes instead of logical sizes
     gdu --no-view-file                    # prevent viewing file contents

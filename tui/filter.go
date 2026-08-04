@@ -33,7 +33,9 @@ func (ui *UI) showFilterInput() {
 	}
 
 	if ui.filteringInput == nil {
-		ui.markedRows = make(map[int]struct{})
+		if !ui.collectorEnabled {
+			ui.markedRows = make(map[int]struct{})
+		}
 
 		ui.filteringInput = tview.NewInputField()
 		ui.filteringInput.SetLabel("Name: ")
@@ -81,7 +83,9 @@ func (ui *UI) showTypeFilterInput() {
 	}
 
 	if ui.typeFilteringInput == nil {
-		ui.markedRows = make(map[int]struct{})
+		if !ui.collectorEnabled {
+			ui.markedRows = make(map[int]struct{})
+		}
 
 		ui.typeFilteringInput = tview.NewInputField()
 		ui.typeFilteringInput.SetLabel("Type: ")

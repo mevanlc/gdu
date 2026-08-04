@@ -28,7 +28,9 @@ func (ui *UI) SetDefaultSorting(by, order string) {
 }
 
 func (ui *UI) setSorting(newOrder string) {
-	ui.markedRows = make(map[int]struct{})
+	if !ui.collectorEnabled {
+		ui.markedRows = make(map[int]struct{})
+	}
 
 	if newOrder == ui.sortBy {
 		if ui.sortOrder == ascOrder {

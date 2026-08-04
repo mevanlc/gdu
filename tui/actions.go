@@ -198,7 +198,7 @@ func (ui *UI) ReadFromStorage(storagePath, path string) error {
 }
 
 func (ui *UI) delete(shouldEmpty bool) {
-	if len(ui.markedRows) > 0 {
+	if ui.markedItemCount() > 0 {
 		ui.deleteMarked(shouldEmpty)
 	} else {
 		ui.deleteSelected(shouldEmpty)

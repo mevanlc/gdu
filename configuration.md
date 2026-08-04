@@ -152,6 +152,14 @@ Delete items in parallel, which might increase the speed of deletion
 
 Allow navigating above the launch directory by pressing the left arrow key. When enabled, pressing left at the top-level directory will rescan and open its parent directory. Disabled by default.
 
+#### `collector`
+
+Keep marked items across directory navigation and show them in a collector panel. Marked-item delete, empty, and trash actions apply to all collected items.
+
+#### `collector-split`
+
+Collector panel layout. Accepted values are `h`/`horizontal` (collector below the directory list) and `v`/`vertical` (collector beside the directory list). Defaults to `vertical`.
+
 
 #### `style.selected-row.text-color`
 

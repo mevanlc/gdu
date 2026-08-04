@@ -3,8 +3,8 @@ package tui
 import (
 	"time"
 
-	"github.com/mevanlc/gdu/v5/pkg/fs"
 	"github.com/gdamore/tcell/v2"
+	"github.com/mevanlc/gdu/v5/pkg/fs"
 	"github.com/rivo/tview"
 )
 
@@ -19,6 +19,9 @@ func (ui *UI) onMouse(event *tcell.EventMouse, action tview.MouseAction) (*tcell
 		ui.pages.HasPage("emptying") ||
 		ui.pages.HasPage("help") {
 		return nil, action
+	}
+	if ui.collectorFocused {
+		return event, action
 	}
 
 	// nolint: exhaustive // Why: we don't need to handle all mouse events

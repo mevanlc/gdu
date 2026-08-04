@@ -20,6 +20,7 @@ var (
   [::b]pgup/pgdn, g/G     [white:black:-]Move cursor top/bottom
  [::b]enter, right, l     [white:black:-]Go to directory/device
          [::b]left, h     [white:black:-]Go to parent directory
+                 [::b]tab     [white:black:-]Move focus to/from collector (collector mode)
 
                [::b]r     [white:black:-]Rescan current directory
                [::b]E     [white:black:-]Export analysis data to file as JSON
@@ -44,6 +45,10 @@ Item under cursor:
                [::b]o     [white:black:-]Open file or directory in external program
                [::b]i     [white:black:-]Show info about item
 
+Collector (when focused):
+        [::b]space, d     [white:black:-]Remove item from collector
+               [::b]D     [white:black:-]Remove all items from collector
+
 Sort by (twice toggles asc/desc):
                [::b]n     [white:black:-]Sort by name (asc/desc)
                [::b]s     [white:black:-]Sort by size (asc/desc)
@@ -65,8 +70,9 @@ func (ui *UI) currentDirLabelText() string {
 	return label
 }
 
-// nolint: funlen // Why: complex function
+//nolint:funlen,gocyclo // Directory rendering combines layout, totals, filtering, and row styling.
 func (ui *UI) showDir() {
+	keepCollectorFocus := ui.collectorFocused
 	var (
 		totalUsage int64
 		totalSize  int64
@@ -76,6 +82,9 @@ func (ui *UI) showDir() {
 	)
 
 	ui.currentDirPath = ui.currentDir.GetPath()
+	if ui.collectorEnabled {
+		ui.markedRows = make(map[int]struct{})
+	}
 
 	if ui.changeCwdFn != nil {
 		err := ui.changeCwdFn(ui.currentDirPath)
@@ -92,7 +101,7 @@ func (ui *UI) showDir() {
 	rowIndex := 0
 	if ui.currentDirPath != ui.topDirPath {
 		prefix := "                         "
-		if len(ui.markedRows) > 0 {
+		if ui.markedItemCount() > 0 {
 			prefix += "  "
 		}
 
@@ -159,35 +168,31 @@ func (ui *UI) showDir() {
 			itemCount += item.GetItemCount()
 		}
 
-		_, marked := ui.markedRows[rowIndex]
-
 		var cell *tview.TableCell
-		var reference fs.Item
+		reference := item
+		var collapsedPath *CollapsedPath
 
 		// Check if this directory can be collapsed
-		if item.IsDir() {
-			var collapsedPath *CollapsedPath
-			if ui.collapsePath {
-				collapsedPath = findCollapsiblePath(item)
-			}
+		if item.IsDir() && ui.collapsePath {
+			collapsedPath = findCollapsiblePath(item)
+		}
+		if collapsedPath != nil {
+			// Reference should point to the deepest directory for navigation.
+			reference = collapsedPath.DeepestDir
+		}
 
-			if collapsedPath != nil {
-				// Format as collapsed path
-				cell = tview.NewTableCell(ui.formatCollapsedRow(collapsedPath, maxUsage, maxSize, marked, ignored))
-				// Reference should point to the deepest directory for navigation
-				reference = collapsedPath.DeepestDir
-			} else {
-				// Regular directory formatting
-				cell = tview.NewTableCell(ui.formatFileRow(item, maxUsage, maxSize, marked, ignored))
-				reference = item
-			}
+		marked := ui.itemMarkedAtRow(rowIndex, reference)
+		if collapsedPath != nil {
+			cell = tview.NewTableCell(ui.formatCollapsedRow(collapsedPath, maxUsage, maxSize, marked, ignored))
 		} else {
-			// Regular file formatting
 			cell = tview.NewTableCell(ui.formatFileRow(item, maxUsage, maxSize, marked, ignored))
-			reference = item
 		}
 
 		cell.SetReference(reference)
+		if ui.collectorEnabled && marked {
+			ui.collectorItems[collectorKey(reference.GetPath())] = reference
+			ui.markedRows[rowIndex] = struct{}{}
+		}
 
 		switch {
 		case ignored:
@@ -221,9 +226,13 @@ func (ui *UI) showDir() {
 	}
 
 	selected := ""
-	if len(ui.markedRows) > 0 {
-		selected = " Selected items: " + footerNumberColor +
-			strconv.Itoa(len(ui.markedRows)) + footerTextColor
+	if ui.markedItemCount() > 0 {
+		label := " Selected items: "
+		if ui.collectorEnabled {
+			label = " Collected items: "
+		}
+		selected = label + footerNumberColor +
+			strconv.Itoa(ui.markedItemCount()) + footerTextColor
 	}
 
 	timeFilterText := ui.formatTimeFilterInfo()
@@ -246,9 +255,14 @@ func (ui *UI) showDir() {
 
 	ui.table.Select(0, 0)
 	ui.table.ScrollToBeginning()
+	ui.showCollector()
 
 	if !ui.filtering && !ui.typeFiltering {
-		ui.app.SetFocus(ui.table)
+		if keepCollectorFocus && ui.collectorEnabled {
+			ui.focusCollector()
+		} else {
+			ui.focusTable()
+		}
 	}
 }
 
@@ -319,6 +333,7 @@ func (ui *UI) showDevices() {
 			}
 		}
 	}
+	ui.showCollector()
 }
 
 func (ui *UI) showErr(msg string, err error) {

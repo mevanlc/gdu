@@ -6,12 +6,27 @@ import (
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
-	"github.com/mevanlc/gdu/v5/pkg/fs"
 	"github.com/gdamore/tcell/v2"
+	"github.com/mevanlc/gdu/v5/pkg/fs"
 	"github.com/rivo/tview"
 )
 
 func (ui *UI) fileItemMarked(row int) {
+	if ui.collectorEnabled {
+		cell := ui.table.GetCell(row, 0)
+		if cell == nil {
+			return
+		}
+		item, ok := cell.GetReference().(fs.Item)
+		if !ok {
+			return
+		}
+		ui.toggleCollected(item)
+		ui.showDir()
+		ui.table.Select(min(row+1, ui.table.GetRowCount()-1), 0)
+		return
+	}
+
 	if _, ok := ui.markedRows[row]; ok {
 		delete(ui.markedRows, row)
 	} else {
@@ -32,12 +47,7 @@ func (ui *UI) deleteMarked(shouldEmpty bool) {
 		acting = actingDelete
 	}
 
-	var currentDir fs.Item
-	var markedItems []fs.Item
-	for row := range ui.markedRows {
-		item := ui.table.GetCell(row, 0).GetReference().(fs.Item)
-		markedItems = append(markedItems, item)
-	}
+	markedItems := ui.markedItems()
 
 	if ui.deleteInBackground {
 		ui.queueForDeletion(markedItems, shouldEmpty)
@@ -49,10 +59,12 @@ func (ui *UI) deleteMarked(shouldEmpty bool) {
 
 	currentRow, _ := ui.table.GetSelection()
 
-	var deleteFun func(fs.Item, fs.Item) error
-
 	go func() {
+		var completed []fs.Item
 		for _, one := range markedItems {
+			if ui.collectorEnabled && coveredByCompletedAction(one, completed, shouldEmpty) {
+				continue
+			}
 			ui.app.QueueUpdateDraw(func() {
 				modal.SetText(
 					cases.Title(language.English).String(acting) +
@@ -61,53 +73,118 @@ func (ui *UI) deleteMarked(shouldEmpty bool) {
 						"...",
 				)
 			})
-
-			if shouldEmpty && !one.IsDir() {
-				deleteFun = ui.emptier
-			} else {
-				deleteFun = ui.remover
-			}
-
-			var deleteItems []fs.Item
-			if shouldEmpty && one.IsDir() {
-				currentDir = one
-				for file := range currentDir.GetFiles(fs.SortBySize, fs.SortDesc) {
-					deleteItems = append(deleteItems, file)
-				}
-			} else {
-				currentDir = ui.currentDir
-				deleteItems = append(deleteItems, one)
-			}
-
-			for _, item := range deleteItems {
-				if err := deleteFun(currentDir, item); err != nil {
-					msg := "Can't " + action + " " + tview.Escape(one.GetName())
-					ui.app.QueueUpdateDraw(func() {
-						ui.pages.RemovePage(acting)
-						ui.showErr(msg, err)
-					})
-					if ui.done != nil {
-						ui.done <- struct{}{}
+			if err := ui.deleteOne(one, shouldEmpty, false); err != nil {
+				msg := "Can't " + action + " " + tview.Escape(one.GetName())
+				ui.app.QueueUpdateDraw(func() {
+					ui.ensureCurrentDirAfterActions(completed, shouldEmpty)
+					ui.applyCompletedCollectorActions(completed, shouldEmpty)
+					ui.pages.RemovePage(acting)
+					if ui.currentDir != nil {
+						ui.showDir()
 					}
-					return
+					ui.showErr(msg, err)
+				})
+				if ui.done != nil {
+					ui.done <- struct{}{}
 				}
+				return
 			}
+			completed = append(completed, one)
 		}
 
 		ui.app.QueueUpdateDraw(func() {
 			ui.pages.RemovePage(acting)
-			ui.pages.RemovePage(acting)
-			ui.markedRows = make(map[int]struct{})
+			ui.ensureCurrentDirAfterActions(completed, shouldEmpty)
+			ui.applyCompletedCollectorActions(completed, shouldEmpty)
+			if !ui.collectorEnabled {
+				ui.markedRows = make(map[int]struct{})
+			}
 			x, y := ui.table.GetOffset()
-			ui.showDir()
-			ui.table.Select(min(currentRow, ui.table.GetRowCount()-1), 0)
-			ui.table.SetOffset(min(x, ui.table.GetRowCount()-1), y)
+			if ui.currentDir != nil {
+				ui.showDir()
+				ui.table.Select(min(currentRow, ui.table.GetRowCount()-1), 0)
+				ui.table.SetOffset(min(x, ui.table.GetRowCount()-1), y)
+			}
 		})
 
 		if ui.done != nil {
 			ui.done <- struct{}{}
 		}
 	}()
+}
+
+func (ui *UI) deleteOne(item fs.Item, shouldEmpty, locked bool) error {
+	deleteFun := ui.remover
+	if shouldEmpty && !item.IsDir() {
+		deleteFun = ui.emptier
+	}
+
+	parent := item.GetParent()
+	deleteItems := []fs.Item{item}
+	if shouldEmpty && item.IsDir() {
+		parent = item
+		deleteItems = nil
+		files := item.GetFiles(fs.SortBySize, fs.SortDesc)
+		if locked {
+			files = item.GetFilesLocked(fs.SortBySize, fs.SortDesc)
+		}
+		for child := range files {
+			deleteItems = append(deleteItems, child)
+		}
+	}
+	if parent == nil {
+		parent = ui.currentDir
+	}
+
+	for _, toDelete := range deleteItems {
+		if err := deleteFun(parent, toDelete); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func coveredByCompletedAction(item fs.Item, completed []fs.Item, shouldEmpty bool) bool {
+	path := collectorKey(item.GetPath())
+	for _, actedOn := range completed {
+		if pathRemovedByAction(path, actedOn, shouldEmpty) {
+			return true
+		}
+	}
+	return false
+}
+
+func pathRemovedByAction(path string, item fs.Item, shouldEmpty bool) bool {
+	root := collectorKey(item.GetPath())
+	return (!shouldEmpty && (path == root || isDescendantPath(path, root))) ||
+		(shouldEmpty && item.IsDir() && isDescendantPath(path, root))
+}
+
+func (ui *UI) ensureCurrentDirAfterActions(items []fs.Item, shouldEmpty bool) {
+	for ui.currentDir != nil {
+		path := collectorKey(ui.currentDir.GetPath())
+		removed := false
+		for _, item := range items {
+			if pathRemovedByAction(path, item, shouldEmpty) {
+				removed = true
+				break
+			}
+		}
+		if !removed {
+			return
+		}
+		ui.currentDir = ui.currentDir.GetParent()
+	}
+}
+
+func (ui *UI) applyCompletedCollectorActions(items []fs.Item, shouldEmpty bool) {
+	if !ui.collectorEnabled {
+		return
+	}
+	for _, item := range items {
+		ui.removeCollectedAfterAction(item, shouldEmpty)
+	}
+	ui.showCollector()
 }
 
 func (ui *UI) confirmDeletionMarked(shouldEmpty bool) {
@@ -122,7 +199,7 @@ func (ui *UI) confirmDeletionMarked(shouldEmpty bool) {
 		SetText(
 			"Are you sure you want to " +
 				action + " [::b]" +
-				strconv.Itoa(len(ui.markedRows)) +
+				strconv.Itoa(ui.markedItemCount()) +
 				"[::-] items?",
 		).
 		AddButtons([]string{"yes", "no", "don't ask me again"}).
@@ -149,6 +226,12 @@ func (ui *UI) confirmDeletionMarked(shouldEmpty bool) {
 }
 
 func (ui *UI) printMarked() {
+	if ui.collectorEnabled {
+		ui.collectorPrintOnExit = true
+		ui.showCollector()
+		return
+	}
+
 	if len(ui.markedRows) == 0 {
 		return
 	}

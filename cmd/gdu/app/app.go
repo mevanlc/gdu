@@ -111,6 +111,8 @@ type Flags struct {
 	ArchiveBrowsing    bool     `yaml:"archive-browsing"`
 	CollapsePath       bool     `yaml:"collapse-path"`
 	BrowseParentDirs   bool     `yaml:"browse-parent-dirs"`
+	Collector          bool     `yaml:"collector"`
+	CollectorSplit     string   `yaml:"collector-split"`
 }
 
 // ShouldRunInNonInteractiveMode checks if the application should run in non-interactive mode
@@ -228,8 +230,14 @@ func (a *App) Run() error {
 		return fmt.Errorf("--interactive and --non-interactive cannot be used at once")
 	}
 
+	collectorSplit, err := normalizeCollectorSplit(a.Flags.CollectorSplit)
+	if err != nil {
+		return err
+	}
+	a.Flags.CollectorSplit = collectorSplit
+
 	path := a.getPath()
-	path, err := filepath.Abs(path)
+	path, err = filepath.Abs(path)
 	if err != nil {
 		return err
 	}
@@ -595,10 +603,29 @@ func (a *App) getOptions() ([]tui.Option, error) {
 			ui.SetBrowseParentDirs()
 		})
 	}
+	if a.Flags.Collector {
+		opts = append(opts, func(ui *tui.UI) {
+			ui.SetCollector(a.Flags.CollectorSplit)
+		})
+	}
 	opts = append(opts, func(ui *tui.UI) {
 		ui.SetShowDiskProgressBar(a.Flags.Style.ProgressModal.ShowDiskProgressBar)
 	})
 	return opts, nil
+}
+
+func normalizeCollectorSplit(value string) (string, error) {
+	switch strings.ToLower(value) {
+	case "", "v", tui.CollectorSplitVertical:
+		return tui.CollectorSplitVertical, nil
+	case "h", tui.CollectorSplitHorizontal:
+		return tui.CollectorSplitHorizontal, nil
+	default:
+		return "", fmt.Errorf(
+			"invalid --collector-split %q: expected h, horizontal, v, or vertical",
+			value,
+		)
+	}
 }
 
 func (a *App) setNoCross(path string) error {

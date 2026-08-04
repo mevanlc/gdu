@@ -42,6 +42,10 @@ func (ui *UI) handleTrash() {
 		)
 		return
 	}
+	if ui.collectorEnabled && ui.markedItemCount() > 0 {
+		ui.trashMarked()
+		return
+	}
 
 	row, column := ui.table.GetSelection()
 	selectedItem, ok := ui.table.GetCell(row, column).GetReference().(fs.Item)
@@ -50,6 +54,62 @@ func (ui *UI) handleTrash() {
 	}
 
 	ui.trashSelected(row, selectedItem)
+}
+
+type trashResult struct {
+	item   fs.Item
+	output []byte
+	err    error
+	moved  bool
+}
+
+func (ui *UI) trashMarked() {
+	items := compactCollectorActions(ui.resolvedCollectedItemsInOrder(), false)
+	modal := tview.NewModal().SetText(fmt.Sprintf("Trashing %d collected items...", len(items)))
+	ui.pages.AddPage(actingTrash, modal, true, true)
+
+	go func() {
+		results := make([]trashResult, 0, len(items))
+		for _, item := range items {
+			output, err := ui.trashRunner(ui.trashCmd, item.GetPath())
+			result := trashResult{
+				item:   item,
+				output: output,
+				err:    err,
+				moved:  !pathExists(item.GetPath()),
+			}
+			results = append(results, result)
+			if err != nil {
+				break
+			}
+		}
+
+		ui.app.QueueUpdateDraw(func() {
+			ui.pages.RemovePage(actingTrash)
+			movedItems := make([]fs.Item, 0, len(results))
+			for _, result := range results {
+				if result.moved {
+					movedItems = append(movedItems, result.item)
+					ui.removeTrashedItemFromModel(result.item)
+					ui.removeCollectedAfterAction(result.item, false)
+				}
+			}
+			ui.ensureCurrentDirAfterActions(movedItems, false)
+			if ui.currentDir != nil {
+				ui.showDir()
+			}
+			for _, result := range results {
+				if result.err != nil {
+					ui.showTrashErr(result.output, result.err)
+					break
+				}
+			}
+		})
+
+		if ui.done != nil {
+			ui.done <- struct{}{}
+		}
+	}()
 }
 
 func (ui *UI) trashSelected(row int, selectedItem fs.Item) {
@@ -82,16 +142,20 @@ func (ui *UI) trashSelected(row int, selectedItem fs.Item) {
 }
 
 func (ui *UI) removeTrashedItem(row int, selectedItem fs.Item) {
-	parent := selectedItem.GetParent()
-	if parent == nil {
-		parent = ui.currentDir
-	}
-	parent.RemoveFile(selectedItem)
+	ui.removeTrashedItemFromModel(selectedItem)
 
 	x, y := ui.table.GetOffset()
 	ui.showDir()
 	ui.table.Select(min(row, ui.table.GetRowCount()-1), 0)
 	ui.table.SetOffset(min(x, ui.table.GetRowCount()-1), y)
+}
+
+func (ui *UI) removeTrashedItemFromModel(selectedItem fs.Item) {
+	parent := selectedItem.GetParent()
+	if parent == nil {
+		parent = ui.currentDir
+	}
+	parent.RemoveFile(selectedItem)
 }
 
 func (ui *UI) showTrashErr(output []byte, err error) {

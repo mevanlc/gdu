@@ -18,6 +18,7 @@ import (
 	"github.com/mevanlc/gdu/v5/internal/testdir"
 	"github.com/mevanlc/gdu/v5/pkg/device"
 	gfs "github.com/mevanlc/gdu/v5/pkg/fs"
+	"github.com/mevanlc/gdu/v5/tui"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -65,6 +66,38 @@ func TestInteractiveAndNonInteractiveConflict(t *testing.T) {
 
 	assert.Empty(t, out)
 	assert.ErrorContains(t, err, "--interactive and --non-interactive cannot be used at once")
+}
+
+func TestNormalizeCollectorSplit(t *testing.T) {
+	tests := map[string]string{
+		"":           tui.CollectorSplitVertical,
+		"v":          tui.CollectorSplitVertical,
+		"vertical":   tui.CollectorSplitVertical,
+		"V":          tui.CollectorSplitVertical,
+		"h":          tui.CollectorSplitHorizontal,
+		"horizontal": tui.CollectorSplitHorizontal,
+		"H":          tui.CollectorSplitHorizontal,
+	}
+	for input, expected := range tests {
+		actual, err := normalizeCollectorSplit(input)
+		assert.NoError(t, err)
+		assert.Equal(t, expected, actual)
+	}
+
+	_, err := normalizeCollectorSplit("diagonal")
+	assert.ErrorContains(t, err, "expected h, horizontal, v, or vertical")
+}
+
+func TestInvalidCollectorSplitStopsRun(t *testing.T) {
+	out, err := runApp(
+		&Flags{Collector: true, CollectorSplit: "diagonal"},
+		[]string{"."},
+		false,
+		testdev.DevicesInfoGetterMock{},
+	)
+
+	assert.Empty(t, out)
+	assert.ErrorContains(t, err, "invalid --collector-split")
 }
 
 func TestAnalyzePath(t *testing.T) {

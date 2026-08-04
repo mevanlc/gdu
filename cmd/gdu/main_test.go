@@ -104,6 +104,15 @@ func TestTrashCmdFlagCanBeSet(t *testing.T) {
 	}
 }
 
+func TestCollectorFlagsRegistered(t *testing.T) {
+	if rootCmd.Flags().Lookup("collector") == nil {
+		t.Fatal("expected collector flag to be registered")
+	}
+	if rootCmd.Flags().Lookup("collector-split") == nil {
+		t.Fatal("expected collector-split flag to be registered")
+	}
+}
+
 func TestInitConfigMalformedSystemConfig(t *testing.T) {
 	// Write invalid YAML to a temp file and point systemConfigPath at it.
 	tmp := filepath.Join(t.TempDir(), "gdu.yaml")

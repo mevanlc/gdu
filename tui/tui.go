@@ -12,13 +12,13 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/gdamore/tcell/v2"
 	"github.com/mevanlc/gdu/v5/internal/common"
 	"github.com/mevanlc/gdu/v5/pkg/analyze"
 	"github.com/mevanlc/gdu/v5/pkg/device"
 	"github.com/mevanlc/gdu/v5/pkg/fs"
 	"github.com/mevanlc/gdu/v5/pkg/remove"
 	"github.com/mevanlc/gdu/v5/pkg/timefilter"
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
@@ -42,6 +42,7 @@ type UI struct {
 	status                  *tview.TextView
 	help                    *tview.Flex
 	table                   *tview.Table
+	collectorTable          *tview.Table
 	filteringInput          *tview.InputField
 	typeFilteringInput      *tview.InputField
 	done                    chan struct{}
@@ -55,6 +56,8 @@ type UI struct {
 	ignoredRows             map[int]struct{}
 	markedRows              map[int]struct{}
 	markedPaths             []string
+	collectorItems          map[string]fs.Item
+	collectorOrder          []string
 	deleteQueue             chan deleteQueueItem
 	resultRow               ResultRow
 	topDirPath              string
@@ -107,12 +110,21 @@ type UI struct {
 	previewing              bool
 	previewSavedDir         fs.Item
 	progressFlex            *tview.Flex
+	collectorEnabled        bool
+	collectorFocused        bool
+	collectorPrintOnExit    bool
+	collectorSplit          string
 }
 
 type deleteQueueItem struct {
 	item        fs.Item
 	shouldEmpty bool
 }
+
+const (
+	CollectorSplitHorizontal = "horizontal"
+	CollectorSplitVertical   = "vertical"
+)
 
 // ResultRow is a struct for a row in the result table
 type ResultRow struct {
@@ -162,6 +174,8 @@ func CreateUI(
 		defaultSortOrder:        "desc",
 		ignoredRows:             make(map[int]struct{}),
 		markedRows:              make(map[int]struct{}),
+		collectorItems:          make(map[string]fs.Item),
+		collectorSplit:          CollectorSplitVertical,
 		exportName:              "export.json",
 		noDelete:                false,
 		noViewFile:              false,
@@ -195,6 +209,9 @@ func CreateUI(
 	ui.table = tview.NewTable().SetSelectable(true, false)
 	ui.table.SetBackgroundColor(tcell.ColorDefault)
 	ui.table.SetSelectedFunc(ui.fileItemSelected)
+	ui.table.SetFocusFunc(func() {
+		ui.collectorFocused = false
+	})
 
 	if ui.UseColors {
 		ui.table.SetSelectedStyle(tcell.Style{}.
@@ -214,6 +231,10 @@ func CreateUI(
 	ui.footer = tview.NewFlex()
 	ui.footer.AddItem(ui.footerLabel, 0, 1, false)
 
+	if ui.collectorEnabled {
+		ui.createCollectorTable()
+	}
+
 	ui.createGrid()
 
 	ui.pages = tview.NewPages().
@@ -227,16 +248,27 @@ func CreateUI(
 
 // createGrid creates the main grid layout
 func (ui *UI) createGrid() {
+	content := tview.Primitive(ui.table)
+	if ui.collectorEnabled {
+		direction := tview.FlexColumn
+		if ui.collectorSplit == CollectorSplitHorizontal {
+			direction = tview.FlexRow
+		}
+		content = tview.NewFlex().SetDirection(direction).
+			AddItem(ui.table, 0, 2, true).
+			AddItem(ui.collectorTable, 0, 1, false)
+	}
+
 	if ui.headerHidden {
 		ui.grid = tview.NewGrid().SetRows(1, 0, 1).SetColumns(0)
 		ui.grid.AddItem(ui.currentDirLabel, 0, 0, 1, 1, 0, 0, false).
-			AddItem(ui.table, 1, 0, 1, 1, 0, 0, true).
+			AddItem(content, 1, 0, 1, 1, 0, 0, true).
 			AddItem(ui.footer, 2, 0, 1, 1, 0, 0, false)
 	} else {
 		ui.grid = tview.NewGrid().SetRows(1, 1, 0, 1).SetColumns(0)
 		ui.grid.AddItem(ui.header, 0, 0, 1, 1, 0, 0, false).
 			AddItem(ui.currentDirLabel, 1, 0, 1, 1, 0, 0, false).
-			AddItem(ui.table, 2, 0, 1, 1, 0, 0, true).
+			AddItem(content, 2, 0, 1, 1, 0, 0, true).
 			AddItem(ui.footer, 3, 0, 1, 1, 0, 0, false)
 	}
 }
@@ -399,6 +431,12 @@ func (ui *UI) SetBrowseParentDirs() {
 	ui.browseParentDirs = true
 }
 
+// SetCollector enables the persistent marked-item collector panel.
+func (ui *UI) SetCollector(split string) {
+	ui.collectorEnabled = true
+	ui.collectorSplit = split
+}
+
 // SetCollapsePath sets the flag to collapse paths
 func (ui *UI) SetCollapsePath(value bool) {
 	ui.collapsePath = value
@@ -454,7 +492,9 @@ func (ui *UI) fileItemSelected(row, column int) {
 	ui.currentDir = selectedDir
 	ui.hideFilterInput()
 	ui.hideTypeFilterInput()
-	ui.markedRows = make(map[int]struct{})
+	if !ui.collectorEnabled {
+		ui.markedRows = make(map[int]struct{})
+	}
 	ui.ignoredRows = make(map[int]struct{})
 	ui.showDir()
 
@@ -554,7 +594,7 @@ func (ui *UI) confirmDeletion(shouldEmpty bool) {
 		return
 	}
 
-	if len(ui.markedRows) > 0 {
+	if ui.markedItemCount() > 0 {
 		ui.confirmDeletionMarked(shouldEmpty)
 	} else {
 		ui.confirmDeletionSelected(shouldEmpty)
@@ -647,6 +687,12 @@ func (ui *UI) isDeleteAllowedWithFilter() bool {
 
 // printMarkedPaths prints the paths of the marked items to the output
 func (ui *UI) printMarkedPaths() {
+	if ui.collectorEnabled && ui.collectorPrintOnExit {
+		for _, item := range ui.collectedItemsInOrder() {
+			fmt.Fprintf(ui.output, "%s\n", item.GetPath())
+		}
+		return
+	}
 	for _, path := range ui.markedPaths {
 		fmt.Fprintf(ui.output, "%s\n", path)
 	}

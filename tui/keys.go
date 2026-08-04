@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/mevanlc/gdu/v5/pkg/fs"
 	"github.com/gdamore/tcell/v2"
+	"github.com/mevanlc/gdu/v5/pkg/fs"
 	"github.com/rivo/tview"
 )
 
@@ -67,6 +67,9 @@ func (ui *UI) keyPressed(key *tcell.EventKey) *tcell.EventKey {
 	if ui.pages.HasPage("help") {
 		return key
 	}
+	if ui.collectorFocused {
+		return ui.handleCollectorActions(key)
+	}
 
 	key = ui.handleShell(key)
 	if key == nil {
@@ -79,6 +82,10 @@ func (ui *UI) keyPressed(key *tcell.EventKey) *tcell.EventKey {
 	}
 
 	key = ui.handleFiltering(key)
+	if key == nil {
+		return nil
+	}
+	key = ui.handleCollectorFocus(key)
 	if key == nil {
 		return nil
 	}
@@ -603,6 +610,14 @@ func (ui *UI) handleRight() {
 
 func (ui *UI) handleDelete(shouldEmpty bool) {
 	if ui.currentDir == nil {
+		return
+	}
+	if ui.collectorEnabled && ui.markedItemCount() > 0 {
+		if ui.askBeforeDelete {
+			ui.confirmDeletion(shouldEmpty)
+		} else {
+			ui.delete(shouldEmpty)
+		}
 		return
 	}
 	// do not allow deleting parent dir

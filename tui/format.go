@@ -99,7 +99,7 @@ func (ui *UI) formatFileRow(item fs.Item, maxUsage, maxSize int64, marked, ignor
 		)
 	}
 
-	if len(ui.markedRows) > 0 {
+	if ui.markedItemCount() > 0 {
 		if marked {
 			row += string('✓')
 		} else {
@@ -186,7 +186,7 @@ func (ui *UI) formatCollapsedRow(collapsedPath *CollapsedPath, maxUsage, maxSize
 		)
 	}
 
-	if len(ui.markedRows) > 0 {
+	if ui.markedItemCount() > 0 {
 		if marked {
 			row += string('✓')
 		} else {
