@@ -11,12 +11,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fatih/color"
 	"github.com/mevanlc/gdu/v5/build"
 	"github.com/mevanlc/gdu/v5/internal/common"
 	"github.com/mevanlc/gdu/v5/pkg/analyze"
 	"github.com/mevanlc/gdu/v5/pkg/device"
 	"github.com/mevanlc/gdu/v5/pkg/fs"
-	"github.com/fatih/color"
 )
 
 // UI struct

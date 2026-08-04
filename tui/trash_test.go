@@ -6,9 +6,9 @@ import (
 	"os"
 	"testing"
 
+	"github.com/gdamore/tcell/v2"
 	"github.com/mevanlc/gdu/v5/internal/testapp"
 	"github.com/mevanlc/gdu/v5/internal/testdir"
-	"github.com/gdamore/tcell/v2"
 	"github.com/stretchr/testify/assert"
 )
 
