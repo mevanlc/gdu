@@ -19,7 +19,7 @@ func (ui *UI) createCollectorTable() {
 		Foreground(ui.selectedTextColor).
 		Background(ui.selectedBackgroundColor))
 	ui.collectorTable.SetFocusFunc(func() {
-		ui.collectorFocused = true
+		ui.setContentFocusState(collectorFocus)
 	})
 	ui.collectorTable.SetBlurFunc(func() {
 		ui.collectorFocused = false
@@ -158,9 +158,9 @@ func (ui *UI) showCollector() {
 	}
 
 	ui.collectorTable.Clear()
-	title := fmt.Sprintf(" Collector (%d) — Tab focus, d remove, D clear ", len(ui.collectorItems))
+	title := fmt.Sprintf(" Collector (%d) — Tab/S-Tab focus, Esc back, d remove, D clear ", len(ui.collectorItems))
 	if ui.collectorPrintOnExit {
-		title = fmt.Sprintf(" Collector (%d, print on) — Tab focus, d remove, D clear ", len(ui.collectorItems))
+		title = fmt.Sprintf(" Collector (%d, print on) — Tab/S-Tab focus, Esc back, d remove, D clear ", len(ui.collectorItems))
 	}
 	ui.collectorTable.SetTitle(title)
 
@@ -208,31 +208,20 @@ func (ui *UI) collectedItemAppliesToCurrentDir(item fs.Item) bool {
 	return collectorKey(filepath.Dir(item.GetPath())) == collectorKey(ui.currentDir.GetPath())
 }
 
-func (ui *UI) focusTable() {
-	ui.collectorFocused = false
-	ui.app.SetFocus(ui.table)
-}
-
-func (ui *UI) focusCollector() {
-	if ui.collectorTable == nil {
-		return
-	}
-	ui.collectorFocused = true
-	ui.app.SetFocus(ui.collectorTable)
-}
-
-func (ui *UI) handleCollectorFocus(key *tcell.EventKey) *tcell.EventKey {
-	if !ui.collectorEnabled || key.Key() != tcell.KeyTab {
-		return key
-	}
-	ui.focusCollector()
-	return nil
-}
-
 func (ui *UI) handleCollectorActions(key *tcell.EventKey) *tcell.EventKey {
-	if key.Key() == tcell.KeyTab {
+	//nolint:exhaustive // Collector keys are an intentional allowlist.
+	switch key.Key() {
+	case tcell.KeyTab:
+		ui.cycleContentFocus(false)
+		return nil
+	case tcell.KeyBacktab:
+		ui.cycleContentFocus(true)
+		return nil
+	case tcell.KeyEscape:
 		ui.focusTable()
 		return nil
+	case tcell.KeyCtrlC:
+		return key
 	}
 
 	switch {
@@ -259,8 +248,29 @@ func (ui *UI) handleCollectorActions(key *tcell.EventKey) *tcell.EventKey {
 		return nil
 	}
 
-	// The collector currently supports navigation and removal only.
-	return key
+	if isCollectorNavigationKey(key) {
+		return key
+	}
+
+	// Collector actions are deliberately allowlisted so directory commands do
+	// not accidentally act on an item in the unfocused directory pane.
+	return nil
+}
+
+func isCollectorNavigationKey(key *tcell.EventKey) bool {
+	//nolint:exhaustive // Only navigation understood by tview.Table is forwarded.
+	switch key.Key() {
+	case tcell.KeyUp, tcell.KeyDown, tcell.KeyLeft, tcell.KeyRight,
+		tcell.KeyHome, tcell.KeyEnd, tcell.KeyPgUp, tcell.KeyPgDn,
+		tcell.KeyCtrlF, tcell.KeyCtrlB:
+		return true
+	case tcell.KeyRune:
+		switch key.Rune() {
+		case 'g', 'G', 'j', 'k', 'h', 'l':
+			return true
+		}
+	}
+	return false
 }
 
 func (ui *UI) redrawCollectorSelection(row int) {

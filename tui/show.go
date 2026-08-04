@@ -20,7 +20,7 @@ var (
   [::b]pgup/pgdn, g/G     [white:black:-]Move cursor top/bottom
  [::b]enter, right, l     [white:black:-]Go to directory/device
          [::b]left, h     [white:black:-]Go to parent directory
-                 [::b]tab     [white:black:-]Move focus to/from collector (collector mode)
+   [::b]tab/shift-tab     [white:black:-]Cycle directory, filters, and collector focus
 
                [::b]r     [white:black:-]Rescan current directory
                [::b]E     [white:black:-]Export analysis data to file as JSON
@@ -46,6 +46,8 @@ Item under cursor:
                [::b]i     [white:black:-]Show info about item
 
 Collector (when focused):
+     [::b]arrows, hjkl     [white:black:-]Move through collected items
+               [::b]esc     [white:black:-]Return focus to directory list
         [::b]space, d     [white:black:-]Remove item from collector
                [::b]D     [white:black:-]Remove all items from collector
 
@@ -347,6 +349,7 @@ func (ui *UI) showErr(msg string, err error) {
 		AddButtons([]string{"ok"}).
 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 			ui.pages.RemovePage("error")
+			ui.restoreOverlayFocus()
 		})
 
 	if !ui.UseColors {
@@ -354,7 +357,7 @@ func (ui *UI) showErr(msg string, err error) {
 	}
 
 	ui.pages.AddPage("error", modal, true, true)
-	ui.app.SetFocus(modal)
+	ui.focusOverlay(modal)
 }
 
 func (ui *UI) showErrFromGo(msg string, err error) {
@@ -389,7 +392,7 @@ func (ui *UI) showHelp() {
 
 	ui.help = flex
 	ui.pages.AddPage("help", flex, true, true)
-	ui.app.SetFocus(text)
+	ui.focusOverlay(text)
 }
 
 func (ui *UI) formatHelpTextFor() string {

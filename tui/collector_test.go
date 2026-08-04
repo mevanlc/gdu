@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -127,6 +128,150 @@ func TestCollectorFocusCanRemoveOneOrAllItems(t *testing.T) {
 
 	assert.Nil(t, ui.keyPressed(tcell.NewEventKey(tcell.KeyTab, 0, 0)))
 	assert.False(t, ui.collectorFocused)
+}
+
+func TestCollectorFocusCyclesThroughActiveFilters(t *testing.T) {
+	cleanup := testdir.CreateTestDir()
+	defer cleanup()
+
+	ui := analyzedCollectorUI(t, &bytes.Buffer{}, CollectorSplitVertical)
+	ui.showFilterInput()
+	nameHandler := ui.filteringInput.InputHandler()
+	nameHandler(tcell.NewEventKey(tcell.KeyEnter, 0, 0), func(tview.Primitive) {})
+	ui.showTypeFilterInput()
+	typeHandler := ui.typeFilteringInput.InputHandler()
+	typeHandler(tcell.NewEventKey(tcell.KeyEnter, 0, 0), func(tview.Primitive) {})
+	require.Equal(t, directoryFocus, ui.currentContentFocus())
+
+	assert.Nil(t, ui.keyPressed(tcell.NewEventKey(tcell.KeyTab, 0, 0)))
+	assert.Equal(t, nameFilterFocus, ui.currentContentFocus())
+	nameHandler(tcell.NewEventKey(tcell.KeyTab, 0, 0), func(tview.Primitive) {})
+	assert.Equal(t, typeFilterFocus, ui.currentContentFocus())
+	typeHandler(tcell.NewEventKey(tcell.KeyTab, 0, 0), func(tview.Primitive) {})
+	assert.Equal(t, collectorFocus, ui.currentContentFocus())
+	assert.Nil(t, ui.keyPressed(tcell.NewEventKey(tcell.KeyTab, 0, 0)))
+	assert.Equal(t, directoryFocus, ui.currentContentFocus())
+
+	assert.Nil(t, ui.keyPressed(tcell.NewEventKey(tcell.KeyBacktab, 0, 0)))
+	assert.Equal(t, collectorFocus, ui.currentContentFocus())
+	assert.Nil(t, ui.keyPressed(tcell.NewEventKey(tcell.KeyBacktab, 0, 0)))
+	assert.Equal(t, typeFilterFocus, ui.currentContentFocus())
+	typeHandler(tcell.NewEventKey(tcell.KeyBacktab, 0, 0), func(tview.Primitive) {})
+	assert.Equal(t, nameFilterFocus, ui.currentContentFocus())
+	nameHandler(tcell.NewEventKey(tcell.KeyBacktab, 0, 0), func(tview.Primitive) {})
+	assert.Equal(t, directoryFocus, ui.currentContentFocus())
+
+	ui.focusCollector()
+	assert.Nil(t, ui.keyPressed(tcell.NewEventKey(tcell.KeyEscape, 0, 0)))
+	assert.Equal(t, directoryFocus, ui.currentContentFocus())
+}
+
+func TestCollectorFocusedKeyAllowlist(t *testing.T) {
+	cleanup := testdir.CreateTestDir()
+	defer cleanup()
+
+	ui := analyzedCollectorUI(t, &bytes.Buffer{}, CollectorSplitVertical)
+	ui.focusCollector()
+
+	allowedNavigation := []*tcell.EventKey{
+		tcell.NewEventKey(tcell.KeyUp, 0, 0),
+		tcell.NewEventKey(tcell.KeyDown, 0, 0),
+		tcell.NewEventKey(tcell.KeyHome, 0, 0),
+		tcell.NewEventKey(tcell.KeyPgDn, 0, 0),
+		tcell.NewEventKey(tcell.KeyCtrlF, 0, 0),
+		tcell.NewEventKey(tcell.KeyRune, 'g', 0),
+		tcell.NewEventKey(tcell.KeyRune, 'G', 0),
+		tcell.NewEventKey(tcell.KeyRune, 'j', 0),
+		tcell.NewEventKey(tcell.KeyRune, 'k', 0),
+	}
+	for _, key := range allowedNavigation {
+		assert.Same(t, key, ui.handleCollectorActions(key))
+	}
+	ctrlC := tcell.NewEventKey(tcell.KeyCtrlC, 0, 0)
+	assert.Same(t, ctrlC, ui.handleCollectorActions(ctrlC))
+
+	disabled := []*tcell.EventKey{
+		tcell.NewEventKey(tcell.KeyEnter, 0, 0),
+		tcell.NewEventKey(tcell.KeyRune, 'e', 0),
+		tcell.NewEventKey(tcell.KeyRune, 't', 0),
+		tcell.NewEventKey(tcell.KeyRune, 'v', 0),
+		tcell.NewEventKey(tcell.KeyRune, 'o', 0),
+		tcell.NewEventKey(tcell.KeyRune, 'i', 0),
+		tcell.NewEventKey(tcell.KeyRune, 'I', 0),
+		tcell.NewEventKey(tcell.KeyRune, '/', 0),
+		tcell.NewEventKey(tcell.KeyRune, 'T', 0),
+		tcell.NewEventKey(tcell.KeyRune, 'r', 0),
+		tcell.NewEventKey(tcell.KeyRune, 'E', 0),
+		tcell.NewEventKey(tcell.KeyRune, 'b', 0),
+		tcell.NewEventKey(tcell.KeyRune, 'a', 0),
+		tcell.NewEventKey(tcell.KeyRune, 'B', 0),
+		tcell.NewEventKey(tcell.KeyRune, 'c', 0),
+		tcell.NewEventKey(tcell.KeyRune, 'm', 0),
+		tcell.NewEventKey(tcell.KeyRune, 'n', 0),
+		tcell.NewEventKey(tcell.KeyRune, 's', 0),
+		tcell.NewEventKey(tcell.KeyRune, 'C', 0),
+		tcell.NewEventKey(tcell.KeyRune, 'M', 0),
+		tcell.NewEventKey(tcell.KeyRune, 'x', 0),
+	}
+	for _, key := range disabled {
+		assert.Nilf(t, ui.handleCollectorActions(key), "key %v should be consumed", key)
+	}
+
+	assert.False(t, ui.collectorPrintOnExit)
+	assert.Nil(t, ui.keyPressed(tcell.NewEventKey(tcell.KeyRune, 'p', 0)))
+	assert.True(t, ui.collectorPrintOnExit)
+}
+
+func TestCollectorFocusRestoredAfterHelpAndError(t *testing.T) {
+	cleanup := testdir.CreateTestDir()
+	defer cleanup()
+
+	ui := analyzedCollectorUI(t, &bytes.Buffer{}, CollectorSplitVertical)
+	ui.focusCollector()
+	assert.Nil(t, ui.keyPressed(tcell.NewEventKey(tcell.KeyRune, '?', 0)))
+	assert.True(t, ui.pages.HasPage("help"))
+	assert.Equal(t, directoryFocus, ui.currentContentFocus())
+	assert.Nil(t, ui.keyPressed(tcell.NewEventKey(tcell.KeyRune, '?', 0)))
+	assert.Equal(t, collectorFocus, ui.currentContentFocus())
+
+	ui.showErr("Something went wrong", nil)
+	assert.Equal(t, directoryFocus, ui.currentContentFocus())
+	name, primitive := ui.pages.GetFrontPage()
+	require.Equal(t, "error", name)
+	modal, ok := primitive.(*tview.Modal)
+	require.True(t, ok)
+	modalApp := tview.NewApplication()
+	modalApp.SetFocus(modal)
+	modal.InputHandler()(
+		tcell.NewEventKey(tcell.KeyEnter, 0, 0),
+		func(p tview.Primitive) { modalApp.SetFocus(p) },
+	)
+	assert.False(t, ui.pages.HasPage("error"))
+	assert.Equal(t, collectorFocus, ui.currentContentFocus())
+}
+
+func TestCollectorFocusRestoredWhenQuitIsCancelled(t *testing.T) {
+	cleanup := testdir.CreateTestDir()
+	defer cleanup()
+
+	ui := analyzedCollectorUI(t, &bytes.Buffer{}, CollectorSplitVertical)
+	ui.scanDuration = 10 * time.Second
+	ui.focusCollector()
+	assert.Nil(t, ui.keyPressed(tcell.NewEventKey(tcell.KeyRune, 'q', 0)))
+	assert.Equal(t, directoryFocus, ui.currentContentFocus())
+
+	name, primitive := ui.pages.GetFrontPage()
+	require.Equal(t, "confirm", name)
+	modal, ok := primitive.(*tview.Modal)
+	require.True(t, ok)
+	modalApp := tview.NewApplication()
+	modalApp.SetFocus(modal)
+	modal.InputHandler()(
+		tcell.NewEventKey(tcell.KeyRune, 'n', 0),
+		func(p tview.Primitive) { modalApp.SetFocus(p) },
+	)
+	assert.False(t, ui.pages.HasPage("confirm"))
+	assert.Equal(t, collectorFocus, ui.currentContentFocus())
 }
 
 func TestCollectorPrintUsesExitTimeContents(t *testing.T) {

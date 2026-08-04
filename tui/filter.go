@@ -24,7 +24,7 @@ func (ui *UI) hideFilterInput() {
 	ui.filteringInput = nil
 	ui.filtering = false
 	ui.rebuildFooter()
-	ui.app.SetFocus(ui.table)
+	ui.focusTable()
 }
 
 func (ui *UI) showFilterInput() {
@@ -39,6 +39,12 @@ func (ui *UI) showFilterInput() {
 
 		ui.filteringInput = tview.NewInputField()
 		ui.filteringInput.SetLabel("Name: ")
+		ui.filteringInput.SetFocusFunc(func() {
+			ui.setContentFocusState(nameFilterFocus)
+		})
+		ui.filteringInput.SetBlurFunc(func() {
+			ui.filtering = false
+		})
 
 		if !ui.UseColors {
 			ui.filteringInput.SetFieldBackgroundColor(
@@ -54,19 +60,23 @@ func (ui *UI) showFilterInput() {
 			ui.showDir()
 		})
 		ui.filteringInput.SetDoneFunc(func(key tcell.Key) {
-			if key == tcell.KeyESC {
+			//nolint:exhaustive // tview calls Done only for these completion keys.
+			switch key {
+			case tcell.KeyESC:
 				ui.hideFilterInput()
 				ui.showDir()
-			} else {
-				ui.app.SetFocus(ui.table)
-				ui.filtering = false
+			case tcell.KeyTab:
+				ui.cycleContentFocus(false)
+			case tcell.KeyBacktab:
+				ui.cycleContentFocus(true)
+			default:
+				ui.focusTable()
 			}
 		})
 
 		ui.rebuildFooter()
 	}
-	ui.app.SetFocus(ui.filteringInput)
-	ui.filtering = true
+	ui.focusNameFilter()
 }
 
 func (ui *UI) hideTypeFilterInput() {
@@ -74,7 +84,7 @@ func (ui *UI) hideTypeFilterInput() {
 	ui.typeFilteringInput = nil
 	ui.typeFiltering = false
 	ui.rebuildFooter()
-	ui.app.SetFocus(ui.table)
+	ui.focusTable()
 }
 
 func (ui *UI) showTypeFilterInput() {
@@ -89,6 +99,12 @@ func (ui *UI) showTypeFilterInput() {
 
 		ui.typeFilteringInput = tview.NewInputField()
 		ui.typeFilteringInput.SetLabel("Type: ")
+		ui.typeFilteringInput.SetFocusFunc(func() {
+			ui.setContentFocusState(typeFilterFocus)
+		})
+		ui.typeFilteringInput.SetBlurFunc(func() {
+			ui.typeFiltering = false
+		})
 
 		if !ui.UseColors {
 			ui.typeFilteringInput.SetFieldBackgroundColor(
@@ -104,19 +120,23 @@ func (ui *UI) showTypeFilterInput() {
 			ui.showDir()
 		})
 		ui.typeFilteringInput.SetDoneFunc(func(key tcell.Key) {
-			if key == tcell.KeyESC {
+			//nolint:exhaustive // tview calls Done only for these completion keys.
+			switch key {
+			case tcell.KeyESC:
 				ui.hideTypeFilterInput()
 				ui.showDir()
-			} else {
-				ui.app.SetFocus(ui.table)
-				ui.typeFiltering = false
+			case tcell.KeyTab:
+				ui.cycleContentFocus(false)
+			case tcell.KeyBacktab:
+				ui.cycleContentFocus(true)
+			default:
+				ui.focusTable()
 			}
 		})
 
 		ui.rebuildFooter()
 	}
-	ui.app.SetFocus(ui.typeFilteringInput)
-	ui.typeFiltering = true
+	ui.focusTypeFilter()
 }
 
 // matchesTypeFilter returns true if the file name matches the type filter.

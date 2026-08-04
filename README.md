@@ -103,7 +103,7 @@ Basic list of actions in interactive mode (show help modal for more):
   ?                                   Show help modal
 ```
 
-With `--collector`, marked items persist while navigating and appear in a split panel. Press `Tab` to move focus between the directory list and collector. In the collector, `Space` or `d` removes one item and `D` removes all items. Delete, empty, and trash actions invoked from the directory list apply to every collected item. Pressing `p` enables printing the collector's contents at exit; the paths printed are those still collected when gdu exits.
+With `--collector`, marked items persist while navigating and appear in a split panel. `Tab` cycles focus through the directory list, any active filter fields, and the collector; `Shift-Tab` cycles in reverse, and `Esc` returns from the collector to the directory list. In the collector, navigation keys move through its paths, `Space` or `d` removes one item, and `D` removes all items. Other directory-item actions are disabled while the collector has focus. Delete, empty, and trash actions invoked from the directory list apply to every collected item. Pressing `p` enables printing the collector's contents at exit; the paths printed are those still collected when gdu exits.
 
 ## Examples
 

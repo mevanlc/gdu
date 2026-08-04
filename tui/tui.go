@@ -114,6 +114,8 @@ type UI struct {
 	collectorFocused        bool
 	collectorPrintOnExit    bool
 	collectorSplit          string
+	overlayReturnFocus      contentFocus
+	overlayFocusSaved       bool
 }
 
 type deleteQueueItem struct {
@@ -210,7 +212,7 @@ func CreateUI(
 	ui.table.SetBackgroundColor(tcell.ColorDefault)
 	ui.table.SetSelectedFunc(ui.fileItemSelected)
 	ui.table.SetFocusFunc(func() {
-		ui.collectorFocused = false
+		ui.setContentFocusState(directoryFocus)
 	})
 
 	if ui.UseColors {

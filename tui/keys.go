@@ -81,11 +81,7 @@ func (ui *UI) keyPressed(key *tcell.EventKey) *tcell.EventKey {
 		return nil
 	}
 
-	key = ui.handleFiltering(key)
-	if key == nil {
-		return nil
-	}
-	key = ui.handleCollectorFocus(key)
+	key = ui.handleFocusTraversal(key)
 	if key == nil {
 		return nil
 	}
@@ -97,7 +93,7 @@ func (ui *UI) handleClosingModals(key *tcell.EventKey) *tcell.EventKey {
 	if key.Key() == tcell.KeyEsc || key.Rune() == 'q' {
 		if ui.pages.HasPage("help") {
 			ui.pages.RemovePage("help")
-			ui.app.SetFocus(ui.table)
+			ui.restoreOverlayFocus()
 			return nil
 		}
 		if ui.pages.HasPage("info") {
@@ -253,13 +249,14 @@ func (ui *UI) confirmQuitDialog(printCurrentDirPath bool) {
 		AddButtons([]string{"no", "yes", "don't ask me again"}).
 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 			ui.pages.RemovePage("confirm")
-			ui.app.SetFocus(ui.table)
 			switch buttonIndex {
 			case 2:
 				ui.confirmQuit = false
 				fallthrough
 			case 1:
 				ui.doQuit(printCurrentDirPath)
+			default:
+				ui.restoreOverlayFocus()
 			}
 		})
 	setYesNoKeys(modal, 1, 0)
@@ -272,6 +269,7 @@ func (ui *UI) confirmQuitDialog(printCurrentDirPath bool) {
 	modal.SetBorderColor(tcell.ColorDefault)
 
 	ui.pages.AddPage("confirm", modal, true, true)
+	ui.focusOverlay(modal)
 }
 
 // enterPreview switches from the scanning progress modal to a read-only,
@@ -371,7 +369,7 @@ func (ui *UI) handleHelp(key *tcell.EventKey) *tcell.EventKey {
 	if key.Rune() == '?' {
 		if ui.pages.HasPage("help") {
 			ui.pages.RemovePage("help")
-			ui.app.SetFocus(ui.table)
+			ui.restoreOverlayFocus()
 			return nil
 		}
 		ui.showHelp()
@@ -416,23 +414,6 @@ func (ui *UI) handleLeftRight(key *tcell.EventKey) *tcell.EventKey {
 
 	if key.Rune() == 'l' || key.Key() == tcell.KeyRight {
 		ui.handleRight()
-		return nil
-	}
-	return key
-}
-
-func (ui *UI) handleFiltering(key *tcell.EventKey) *tcell.EventKey {
-	if key.Key() != tcell.KeyTab {
-		return key
-	}
-	if ui.filteringInput != nil {
-		ui.filtering = true
-		ui.app.SetFocus(ui.filteringInput)
-		return nil
-	}
-	if ui.typeFilteringInput != nil {
-		ui.typeFiltering = true
-		ui.app.SetFocus(ui.typeFilteringInput)
 		return nil
 	}
 	return key
