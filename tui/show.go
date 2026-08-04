@@ -412,11 +412,12 @@ func (ui *UI) formatHelpTextFor() string {
 		isTrashAction := strings.Contains(line, "Trash file or directory")
 		isFound := isDeleteAction || isTrashAction
 
-		if ui.noDelete && isFound {
+		switch {
+		case ui.noDelete && isFound:
 			lines[i] += helpDisabledSuffix
-		} else if ui.noDeleteWithFilter && isFound {
+		case ui.noDeleteWithFilter && isFound:
 			lines[i] += " (disabled/filter)"
-		} else if isTrashAction && len(ui.trashCmd) == 0 {
+		case isTrashAction && len(ui.trashCmd) == 0:
 			lines[i] += helpDisabledSuffix
 		}
 

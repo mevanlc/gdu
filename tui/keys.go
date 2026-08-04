@@ -115,6 +115,14 @@ func (ui *UI) handleConfirmation(key *tcell.EventKey) *tcell.EventKey {
 	return key
 }
 
+// Labels of the buttons offered by the confirmation dialogs. The last one
+// suppresses the dialog from then on.
+const (
+	yesButton          = "yes"
+	noButton           = "no"
+	dontAskAgainButton = "don't ask me again"
+)
+
 func setYesNoKeys(modal *tview.Modal, yesButtonIndex, noButtonIndex int) {
 	modal.SetInputCapture(func(key *tcell.EventKey) *tcell.EventKey {
 		switch key.Rune() {
@@ -246,7 +254,7 @@ func (ui *UI) confirmQuitDialog(printCurrentDirPath bool) {
 	}
 	modal := tview.NewModal().
 		SetText(text).
-		AddButtons([]string{"no", "yes", "don't ask me again"}).
+		AddButtons([]string{noButton, yesButton, dontAskAgainButton}).
 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 			ui.pages.RemovePage("confirm")
 			switch buttonIndex {

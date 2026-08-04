@@ -202,7 +202,7 @@ func (ui *UI) confirmDeletionMarked(shouldEmpty bool) {
 				strconv.Itoa(ui.markedItemCount()) +
 				"[::-] items?",
 		).
-		AddButtons([]string{"yes", "no", "don't ask me again"}).
+		AddButtons([]string{yesButton, noButton, dontAskAgainButton}).
 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 			switch buttonIndex {
 			case 2:

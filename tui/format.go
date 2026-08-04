@@ -41,22 +41,35 @@ func formatUsagePercentage(part float64) string {
 	return fmt.Sprintf(" %5.1f%%", part)
 }
 
+// numberColor returns the color used for the numeric columns of a row.
+func (ui *UI) numberColor(colored bool) string {
+	if !colored {
+		return defaultColorBold
+	}
+	return fmt.Sprintf("[%s::b]", ui.resultRow.NumberColor)
+}
+
+// dirPrefix returns the colored slash shown in front of a directory name.
+func (ui *UI) dirPrefix(tracked, colored bool) string {
+	switch {
+	case tracked:
+		return gitTrackedColor + "/"
+	case colored:
+		return fmt.Sprintf("[%s::b]/", ui.resultRow.DirectoryColor)
+	default:
+		return defaultColorBold + "/"
+	}
+}
+
 func (ui *UI) formatFileRow(item fs.Item, maxUsage, maxSize int64, marked, ignored bool) string {
 	partFloat := ui.getUsagePart(item, maxUsage, maxSize, ignored)
 	part := int(partFloat)
 
+	colored := ui.UseColors && !marked && !ignored
+	numberColor := ui.numberColor(colored)
+
 	row := string(item.GetFlag())
-
-	numberColor := fmt.Sprintf(
-		"[%s::b]",
-		ui.resultRow.NumberColor,
-	)
-
-	if ui.UseColors && !marked && !ignored {
-		row += numberColor
-	} else {
-		row += defaultColorBold
-	}
+	row += numberColor
 
 	if ui.ShowApparentSize {
 		row += fmt.Sprintf("%15s", ui.formatSize(item.GetSize(), false, true))
@@ -74,11 +87,7 @@ func (ui *UI) formatFileRow(item fs.Item, maxUsage, maxSize int64, marked, ignor
 	}
 
 	if ui.showItemCount {
-		if ui.UseColors && !marked && !ignored {
-			row += numberColor
-		} else {
-			row += defaultColorBold
-		}
+		row += numberColor
 
 		countToDisplay := item.GetItemCount()
 		if item.IsDir() {
@@ -88,11 +97,7 @@ func (ui *UI) formatFileRow(item fs.Item, maxUsage, maxSize int64, marked, ignor
 	}
 
 	if ui.showMtime {
-		if ui.UseColors && !marked && !ignored {
-			row += numberColor
-		} else {
-			row += defaultColorBold
-		}
+		row += numberColor
 		row += fmt.Sprintf(
 			"%s "+defaultColor,
 			item.GetMtime().Format("2006-01-02 15:04:05"),
@@ -108,15 +113,9 @@ func (ui *UI) formatFileRow(item fs.Item, maxUsage, maxSize int64, marked, ignor
 		row += " "
 	}
 
-	tracked := ui.UseColors && !marked && !ignored && ui.IsGitTracked(item.GetPath(), item.IsDir())
+	tracked := colored && ui.IsGitTracked(item.GetPath(), item.IsDir())
 	if item.IsDir() {
-		if tracked {
-			row += gitTrackedColor + "/"
-		} else if ui.UseColors && !marked && !ignored {
-			row += fmt.Sprintf("[%s::b]/", ui.resultRow.DirectoryColor)
-		} else {
-			row += defaultColorBold + "/"
-		}
+		row += ui.dirPrefix(tracked, colored)
 	} else if tracked {
 		row += gitTrackedColor
 	}
@@ -132,18 +131,11 @@ func (ui *UI) formatCollapsedRow(collapsedPath *CollapsedPath, maxUsage, maxSize
 	partFloat := ui.getUsagePart(item, maxUsage, maxSize, ignored)
 	part := int(partFloat)
 
+	colored := ui.UseColors && !marked && !ignored
+	numberColor := ui.numberColor(colored)
+
 	row := string(item.GetFlag())
-
-	numberColor := fmt.Sprintf(
-		"[%s::b]",
-		ui.resultRow.NumberColor,
-	)
-
-	if ui.UseColors && !marked && !ignored {
-		row += numberColor
-	} else {
-		row += defaultColorBold
-	}
+	row += numberColor
 
 	if ui.ShowApparentSize {
 		row += fmt.Sprintf("%15s", ui.formatSize(item.GetSize(), false, true))
@@ -161,11 +153,7 @@ func (ui *UI) formatCollapsedRow(collapsedPath *CollapsedPath, maxUsage, maxSize
 	}
 
 	if ui.showItemCount {
-		if ui.UseColors && !marked && !ignored {
-			row += numberColor
-		} else {
-			row += defaultColorBold
-		}
+		row += numberColor
 
 		countToDisplay := item.GetItemCount()
 		if item.IsDir() {
@@ -175,11 +163,7 @@ func (ui *UI) formatCollapsedRow(collapsedPath *CollapsedPath, maxUsage, maxSize
 	}
 
 	if ui.showMtime {
-		if ui.UseColors && !marked && !ignored {
-			row += numberColor
-		} else {
-			row += defaultColorBold
-		}
+		row += numberColor
 		row += fmt.Sprintf(
 			"%s "+defaultColor,
 			item.GetMtime().Format("2006-01-02 15:04:05"),
@@ -196,14 +180,8 @@ func (ui *UI) formatCollapsedRow(collapsedPath *CollapsedPath, maxUsage, maxSize
 	}
 
 	// Always display as directory with special formatting for collapsed path
-	tracked := ui.UseColors && !marked && !ignored && ui.IsGitTracked(item.GetPath(), true)
-	if tracked {
-		row += gitTrackedColor + "/"
-	} else if ui.UseColors && !marked && !ignored {
-		row += fmt.Sprintf("[%s::b]/", ui.resultRow.DirectoryColor)
-	} else {
-		row += defaultColorBold + "/"
-	}
+	tracked := colored && ui.IsGitTracked(item.GetPath(), true)
+	row += ui.dirPrefix(tracked, colored)
 
 	// Display the collapsed path (e.g., "a/b/c")
 	row += tview.Escape(collapsedPath.DisplayName)
