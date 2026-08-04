@@ -3,6 +3,7 @@
 package common
 
 import (
+	"os"
 	"regexp"
 	"strconv"
 )
@@ -23,6 +24,8 @@ type UI struct {
 	FilteringFiles        bool
 	StatCompressed        bool
 	GitTracker            GitTracker
+	blockSize             int64
+	blockSuffix           string
 }
 
 // GitTracker identifies paths represented by a Git index.
@@ -71,6 +74,109 @@ func (ui *UI) SetGitTracker(tracker GitTracker) {
 // IsGitTracked reports whether path is represented by a Git index.
 func (ui *UI) IsGitTracked(path string, isDir bool) bool {
 	return ui.GitTracker != nil && ui.GitTracker.IsTracked(path, isDir)
+}
+
+// SetBlockSizeFromEnvironment applies the BLOCK_SIZE or BLOCKSIZE output format.
+func (ui *UI) SetBlockSizeFromEnvironment() {
+	value, ok := os.LookupEnv("BLOCK_SIZE")
+	if !ok {
+		value, ok = os.LookupEnv("BLOCKSIZE")
+	}
+	if !ok {
+		return
+	}
+
+	switch value {
+	case "human-readable":
+		return
+	case "si":
+		ui.UseSIPrefix = true
+		return
+	}
+
+	blockSize, suffix, ok := parseBlockSize(value)
+	if !ok {
+		return
+	}
+	ui.blockSize = blockSize
+	ui.blockSuffix = suffix
+}
+
+// FormatBlockSize formats size as a rounded-up count of configured blocks.
+func (ui *UI) FormatBlockSize(size int64) (string, bool) {
+	if ui.blockSize == 0 {
+		return "", false
+	}
+
+	blocks := size / ui.blockSize
+	if size > 0 && size%ui.blockSize != 0 {
+		blocks++
+	}
+	return strconv.FormatInt(blocks, 10) + ui.blockSuffix, true
+}
+
+func parseBlockSize(value string) (blockSize int64, suffix string, ok bool) {
+	if value == "" {
+		return 0, "", false
+	}
+
+	index := 0
+	for index < len(value) && value[index] >= '0' && value[index] <= '9' {
+		index++
+	}
+	plainUnit := index == 0
+	count := int64(1)
+	if !plainUnit {
+		var err error
+		count, err = strconv.ParseInt(value[:index], 10, 64)
+		if err != nil || count < 1 {
+			return 0, "", false
+		}
+	}
+
+	unit := value[index:]
+	multiplier, valid := blockSizeMultiplier(unit)
+	if !valid || count > int64(^uint64(0)>>1)/multiplier {
+		return 0, "", false
+	}
+	if plainUnit {
+		suffix = unit
+	}
+
+	return count * multiplier, suffix, true
+}
+
+func blockSizeMultiplier(unit string) (int64, bool) {
+	switch unit {
+	case "":
+		return 1, true
+	case "k", "K", "Ki", "KiB":
+		return 1 << 10, true
+	case "kB":
+		return 1e3, true
+	case "M", "Mi", "MiB":
+		return 1 << 20, true
+	case "MB":
+		return 1e6, true
+	case "G", "Gi", "GiB":
+		return 1 << 30, true
+	case "GB":
+		return 1e9, true
+	case "T", "Ti", "TiB":
+		return 1 << 40, true
+	case "TB":
+		return 1e12, true
+	case "P", "Pi", "PiB":
+		return 1 << 50, true
+	case "PB":
+		return 1e15, true
+	case "E", "Ei", "EiB":
+		return 1 << 60, true
+	case "EB":
+		return 1e18, true
+	default:
+		return 0, false
+	}
 }
 
 // binary multiplies prefixes (IEC)
