@@ -21,6 +21,7 @@ var (
  [::b]enter, right, l     [white:black:-]Go to directory/device
          [::b]left, h     [white:black:-]Go to parent directory
    [::b]tab/shift-tab     [white:black:-]Cycle directory, filters, and collector focus
+          [::b]ctrl-l     [white:black:-]Redraw screen
 
                [::b]r     [white:black:-]Rescan current directory
                [::b]E     [white:black:-]Export analysis data to file as JSON

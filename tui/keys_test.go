@@ -42,6 +42,27 @@ func TestShowHelp(t *testing.T) {
 	assert.True(t, ui.pages.HasPage("help"))
 }
 
+func TestCtrlLRedrawsBeforeViewSpecificKeyHandling(t *testing.T) {
+	simScreen := testapp.CreateSimScreen()
+	defer simScreen.Fini()
+
+	app := testapp.CreateMockedApp(false).(*testapp.MockedApp)
+	ui := CreateUI(app, simScreen, &bytes.Buffer{}, true, true, false, false)
+	ctrlL := tcell.NewEventKey(tcell.KeyCtrlL, 0, tcell.ModCtrl)
+
+	assert.Nil(t, ui.keyPressed(ctrlL))
+	assert.Equal(t, 1, app.GetSyncCalls())
+
+	ui.filtering = true
+	assert.Nil(t, ui.keyPressed(ctrlL))
+	assert.Equal(t, 2, app.GetSyncCalls())
+
+	ui.filtering = false
+	ui.pages.AddPage("progress", tview.NewBox(), true, true)
+	assert.Nil(t, ui.keyPressed(ctrlL))
+	assert.Equal(t, 3, app.GetSyncCalls())
+}
+
 func TestCloseHelp(t *testing.T) {
 	simScreen := testapp.CreateSimScreen()
 	defer simScreen.Fini()

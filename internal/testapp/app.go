@@ -28,6 +28,7 @@ func CreateTestAppWithSimScreen(width, height int) (app *tview.Application, scre
 type MockedApp struct {
 	mutex       *sync.Mutex
 	updateDraws []func()
+	syncCalls   int
 	BeforeDraws []func(screen tcell.Screen) bool
 	FailRun     bool
 }
@@ -59,6 +60,21 @@ func (app *MockedApp) Stop() {}
 func (app *MockedApp) Suspend(f func()) bool {
 	f()
 	return true
+}
+
+// Sync records a request to redraw the complete terminal screen.
+func (app *MockedApp) Sync() *tview.Application {
+	app.mutex.Lock()
+	defer app.mutex.Unlock()
+	app.syncCalls++
+	return nil
+}
+
+// GetSyncCalls returns how many complete screen redraws were requested.
+func (app *MockedApp) GetSyncCalls() int {
+	app.mutex.Lock()
+	defer app.mutex.Unlock()
+	return app.syncCalls
 }
 
 // SetRoot does nothing

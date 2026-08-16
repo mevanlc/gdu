@@ -15,6 +15,12 @@ var analyzeParentPath = func(ui *UI, path string, parentDir fs.Item) error {
 }
 
 func (ui *UI) keyPressed(key *tcell.EventKey) *tcell.EventKey {
+	// Handle Ctrl+L before page-specific returns and rune-based "l" navigation.
+	if key.Key() == tcell.KeyCtrlL {
+		ui.app.Sync()
+		return nil
+	}
+
 	if ui.handleCtrlZ(key) == nil {
 		return nil
 	}

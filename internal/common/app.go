@@ -12,6 +12,7 @@ type TermApplication interface {
 	Run() error
 	Stop()
 	Suspend(f func()) bool
+	Sync() *tview.Application
 	SetRoot(root tview.Primitive, fullscreen bool) *tview.Application
 	SetFocus(p tview.Primitive) *tview.Application
 	SetInputCapture(capture func(event *tcell.EventKey) *tcell.EventKey) *tview.Application

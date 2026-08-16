@@ -132,6 +132,7 @@ func TestHelp(t *testing.T) {
 	// printScreen(simScreen)
 
 	helpText := ui.formatHelpTextFor()
+	assert.Contains(t, helpText, "Redraw screen")
 	assert.Contains(t, helpText, "Delete file or directory")
 	assert.Contains(t, helpText, "Trash file or directory")
 }
