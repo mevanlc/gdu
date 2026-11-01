@@ -12,7 +12,7 @@ import (
 )
 
 func (ui *UI) createCollectorTable() {
-	ui.collectorTable = tview.NewTable().SetSelectable(true, false)
+	ui.collectorTable = tview.NewTable()
 	ui.collectorTable.SetBackgroundColor(tcell.ColorDefault)
 	ui.collectorTable.SetBorder(true).SetBorderColor(tcell.ColorDefault)
 	ui.collectorTable.SetTitleAlign(tview.AlignLeft)
@@ -32,11 +32,20 @@ func (ui *UI) createCollectorTable() {
 		Background(ui.selectedBackgroundColor))
 	ui.collectorTable.SetFocusFunc(func() {
 		ui.setContentFocusState(collectorFocus)
+		ui.syncCollectorSelection()
 	})
 	ui.collectorTable.SetBlurFunc(func() {
 		ui.collectorFocused = false
+		ui.syncCollectorSelection()
 	})
 	ui.showCollector()
+}
+
+func (ui *UI) syncCollectorSelection() {
+	count := len(ui.collectorItems)
+	row, _ := ui.collectorTable.GetSelection()
+	ui.collectorTable.Select(max(0, min(row, count-1)), 0)
+	ui.collectorTable.SetSelectable(ui.collectorFocused && count > 0, false)
 }
 
 func collectorKey(path string) string {
@@ -223,6 +232,7 @@ func (ui *UI) showCollector() {
 	if row == 0 {
 		ui.collectorTable.SetCell(0, 0, tview.NewTableCell(" No collected items ").SetSelectable(false))
 	}
+	ui.syncCollectorSelection()
 }
 
 func (ui *UI) collectedItemAppliesToCurrentDir(item fs.Item) bool {

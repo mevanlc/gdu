@@ -13,6 +13,7 @@ import (
 
 	"github.com/mevanlc/gdu/v5/internal/testapp"
 	"github.com/mevanlc/gdu/v5/internal/testdir"
+	"github.com/mevanlc/gdu/v5/pkg/analyze"
 	"github.com/mevanlc/gdu/v5/pkg/fs"
 )
 
@@ -128,6 +129,74 @@ func TestCollectorFocusCanRemoveOneOrAllItems(t *testing.T) {
 
 	assert.Nil(t, ui.keyPressed(tcell.NewEventKey(tcell.KeyTab, 0, 0)))
 	assert.False(t, ui.collectorFocused)
+}
+
+func TestCollectorSelectionFollowsFocus(t *testing.T) {
+	for _, tt := range []struct {
+		name  string
+		items []string
+	}{
+		{name: "one_item", items: []string{"first"}},
+		{name: "several_items", items: []string{"first", "second", "third"}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			app, screen := testapp.CreateTestAppWithSimScreen(80, 12)
+			t.Cleanup(screen.Fini)
+			ui := CreateUI(app, screen, &bytes.Buffer{}, true, true, false, false, func(ui *UI) {
+				ui.SetCollector(CollectorSplitVertical)
+			})
+			ui.collectorTable.SetRect(0, 0, 80, 12)
+			draw := func() {
+				screen.Clear()
+				ui.collectorTable.Draw(screen)
+				screen.Show()
+			}
+			checkSelection := func(wantRow int, focused bool) {
+				t.Helper()
+				draw()
+				row, _ := ui.collectorTable.GetSelection()
+				assert.Equal(t, wantRow, row)
+				for i := range len(ui.collectorItems) {
+					_, style, _ := screen.Get(1, i+1)
+					_, background, _ := style.Decompose()
+					if focused && i == wantRow {
+						assert.Equal(t, ui.selectedBackgroundColor, background, "selected row %d", i)
+					} else {
+						assert.NotEqual(t, ui.selectedBackgroundColor, background, "unselected row %d", i)
+					}
+				}
+			}
+
+			// Drawing the empty placeholder must not move the initial selection.
+			ui.focusCollector()
+			draw()
+			ui.focusTable()
+			parent := &analyze.Dir{File: &analyze.File{Name: "items"}}
+			for _, name := range tt.items {
+				ui.toggleCollected(&analyze.File{Name: name, Parent: parent})
+				ui.showCollector()
+				checkSelection(0, false)
+			}
+			ui.focusCollector()
+			checkSelection(0, true)
+
+			lastRow := len(tt.items) - 1
+			ui.collectorTable.InputHandler()(tcell.NewEventKey(tcell.KeyEnd, 0, 0), func(tview.Primitive) {})
+			checkSelection(lastRow, true)
+			ui.focusTable()
+			checkSelection(lastRow, false)
+			ui.focusCollector()
+			checkSelection(lastRow, true)
+
+			ui.keyPressed(tcell.NewEventKey(tcell.KeyRune, '-', 0))
+			checkSelection(max(0, lastRow-1), true)
+			ui.keyPressed(tcell.NewEventKey(tcell.KeyRune, '_', 0))
+			draw()
+			ui.toggleCollected(&analyze.File{Name: "new", Parent: parent})
+			ui.showCollector()
+			checkSelection(0, true)
+		})
+	}
 }
 
 func TestCollectorFocusCyclesThroughActiveFilters(t *testing.T) {

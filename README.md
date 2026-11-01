@@ -37,6 +37,10 @@ the collector name and current count; key hints sit on the bottom border. Both
 start at the left and truncate on the right when space is tight. Entries that
 live in the directory you are currently looking at are highlighted.
 
+The collector initially selects the first item and remembers its selection
+between focus changes. The selection highlight is shown only while the
+collector has focus.
+
 `Tab` cycles focus through the directory list, whichever filter inputs are open,
 and the collector; `Shift-Tab` cycles backwards; `Esc` returns from the
 collector to the directory list. While the collector has focus, the usual
