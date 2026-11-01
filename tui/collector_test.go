@@ -118,11 +118,11 @@ func TestCollectorFocusCanRemoveOneOrAllItems(t *testing.T) {
 	assert.Nil(t, ui.keyPressed(tcell.NewEventKey(tcell.KeyTab, 0, 0)))
 	assert.True(t, ui.collectorFocused)
 	ui.collectorTable.Select(0, 0)
-	assert.Nil(t, ui.keyPressed(tcell.NewEventKey(tcell.KeyRune, 'd', 0)))
+	assert.Nil(t, ui.keyPressed(tcell.NewEventKey(tcell.KeyRune, '-', 0)))
 	assert.Len(t, ui.collectorItems, 1)
 	assert.True(t, ui.collectorFocused)
 
-	assert.Nil(t, ui.keyPressed(tcell.NewEventKey(tcell.KeyRune, 'D', 0)))
+	assert.Nil(t, ui.keyPressed(tcell.NewEventKey(tcell.KeyRune, '_', 0)))
 	assert.Empty(t, ui.collectorItems)
 	assert.Empty(t, ui.markedRows)
 
@@ -290,7 +290,7 @@ func TestCollectorPrintUsesExitTimeContents(t *testing.T) {
 
 	ui.focusCollector()
 	ui.collectorTable.Select(collectorRowForPath(t, ui, "test_dir/nested"), 0)
-	ui.handleCollectorActions(tcell.NewEventKey(tcell.KeyRune, 'd', 0))
+	ui.handleCollectorActions(tcell.NewEventKey(tcell.KeyRune, '-', 0))
 
 	ui.doQuit(false)
 	assert.Equal(t, "test_dir/nested/file2\n", output.String())

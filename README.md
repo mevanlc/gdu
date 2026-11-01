@@ -32,15 +32,16 @@ directory list.
     gdu --collector --collector-split h /some/dir   # panel below the list
 
 `--collector-split` accepts `v` or `vertical` (the default) and `h` or
-`horizontal`; any other value is rejected at startup. The panel title carries
-the current count, and entries that live in the directory you are currently
-looking at are highlighted.
+`horizontal`; any other value is rejected at startup. The top border carries
+the collector name and current count; key hints sit on the bottom border. Both
+start at the left and truncate on the right when space is tight. Entries that
+live in the directory you are currently looking at are highlighted.
 
 `Tab` cycles focus through the directory list, whichever filter inputs are open,
 and the collector; `Shift-Tab` cycles backwards; `Esc` returns from the
 collector to the directory list. While the collector has focus, the usual
 navigation keys (arrows, `hjkl`, `g`/`G`, page keys) move through the collected
-paths, `Space` or `d` drops the selected entry, and `D` empties the collector.
+paths, `Space` or `-` drops the selected entry, and `_` empties the collector.
 Every other item action is ignored while the collector is focused, so a stray
 keypress cannot act on the unfocused directory list.
 

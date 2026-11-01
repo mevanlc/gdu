@@ -65,8 +65,8 @@ var helpSections = []helpSection{
 	{title: "Collector (when focused):", entries: []helpEntry{
 		{keys: "arrows, hjkl", description: "Move through collected items"},
 		{keys: "esc", description: "Return focus to directory list"},
-		{keys: "space, d", description: "Remove item from collector"},
-		{keys: "D", description: "Remove all items from collector"},
+		{keys: "space, -", description: "Remove item from collector"},
+		{keys: "_", description: "Remove all items from collector"},
 	}},
 	{title: "Sort by (twice toggles asc/desc):", entries: []helpEntry{
 		{keys: "n", description: "Sort by name (asc/desc)"},

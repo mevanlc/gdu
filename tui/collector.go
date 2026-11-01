@@ -15,6 +15,18 @@ func (ui *UI) createCollectorTable() {
 	ui.collectorTable = tview.NewTable().SetSelectable(true, false)
 	ui.collectorTable.SetBackgroundColor(tcell.ColorDefault)
 	ui.collectorTable.SetBorder(true).SetBorderColor(tcell.ColorDefault)
+	ui.collectorTable.SetTitleAlign(tview.AlignLeft)
+	ui.collectorTable.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
+		if width > 2 && height >= 2 {
+			const hints = " Tab/S-Tab focus, - remove, _ clear "
+			color := ui.collectorTable.GetBorderColor()
+			printed, _ := tview.Print(screen, hints, x+1, y+height-1, width-2, tview.AlignLeft, color)
+			if printed < len(hints) {
+				tview.Print(screen, string(tview.SemigraphicsHorizontalEllipsis), x+width-2, y+height-1, 1, tview.AlignLeft, color)
+			}
+		}
+		return ui.collectorTable.GetInnerRect()
+	})
 	ui.collectorTable.SetSelectedStyle(tcell.Style{}.
 		Foreground(ui.selectedTextColor).
 		Background(ui.selectedBackgroundColor))
@@ -184,9 +196,9 @@ func (ui *UI) showCollector() {
 	ui.syncCollectorVisibility()
 
 	ui.collectorTable.Clear()
-	title := fmt.Sprintf(" Collector (%d) — Tab/S-Tab focus, Esc back, d remove, D clear ", len(ui.collectorItems))
+	title := fmt.Sprintf(" Collector (%d) ", len(ui.collectorItems))
 	if ui.collectorPrintOnExit {
-		title = fmt.Sprintf(" Collector (%d, print on) — Tab/S-Tab focus, Esc back, d remove, D clear ", len(ui.collectorItems))
+		title = fmt.Sprintf(" Collector (%d, print on) ", len(ui.collectorItems))
 	}
 	ui.collectorTable.SetTitle(title)
 
@@ -254,11 +266,11 @@ func (ui *UI) handleCollectorActions(key *tcell.EventKey) *tcell.EventKey {
 	case key.Rune() == 'p':
 		ui.printMarked()
 		return nil
-	case key.Rune() == 'D':
+	case key.Rune() == '_':
 		ui.clearCollector()
 		ui.redrawCollectorSelection(0)
 		return nil
-	case key.Rune() == 'd', key.Rune() == ' ', key.Key() == tcell.KeyDelete,
+	case key.Rune() == '-', key.Rune() == ' ', key.Key() == tcell.KeyDelete,
 		key.Key() == tcell.KeyBackspace, key.Key() == tcell.KeyBackspace2:
 		row, _ := ui.collectorTable.GetSelection()
 		cell := ui.collectorTable.GetCell(row, 0)
