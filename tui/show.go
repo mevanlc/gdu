@@ -13,52 +13,6 @@ import (
 	"github.com/mevanlc/gdu/v5/pkg/fs"
 )
 
-var (
-	helpDisabledSuffix = " (disabled)"
-
-	helpText = `     [::b]up/down, k/j    [white:black:-]Move cursor up/down
-  [::b]pgup/pgdn, g/G     [white:black:-]Move cursor top/bottom
- [::b]enter, right, l     [white:black:-]Go to directory/device
-         [::b]left, h     [white:black:-]Go to parent directory
-   [::b]tab/shift-tab     [white:black:-]Cycle directory, filters, and collector focus
-          [::b]ctrl-l     [white:black:-]Redraw screen
-
-               [::b]r     [white:black:-]Rescan current directory
-               [::b]E     [white:black:-]Export analysis data to file as JSON
-               [::b]/     [white:black:-]Search items by name
-               [::b]T     [white:black:-]Filter items by file type (extension)
-               [::b]a     [white:black:-]Toggle between showing disk usage and apparent size
-               [::b]B     [white:black:-]Toggle bar alignment to biggest file or directory
-               [::b]c     [white:black:-]Show/hide file count
-               [::b]m     [white:black:-]Show/hide latest mtime
-               [::b]b     [white:black:-]Spawn shell in current directory
-               [::b]q     [white:black:-]Quit gdu (asks to confirm after a long scan)
-               [::b]Q     [white:black:-]Quit gdu and print current directory path
-
-Item under cursor:
-               [::b]d     [white:black:-]Delete file or directory
-               [::b]e     [white:black:-]Empty file or directory
-               [::b]t     [white:black:-]Trash file or directory
-                   [::b]space [white:black:-]Mark file or directory for deletion
-                   [::b]p     [white:black:-]Print marked items paths to stdout after quitting
-                   [::b]I     [white:black:-]Ignore file or directory
-               [::b]v     [white:black:-]Show content of file
-               [::b]o     [white:black:-]Open file or directory in external program
-               [::b]i     [white:black:-]Show info about item
-
-Collector (when focused):
-     [::b]arrows, hjkl     [white:black:-]Move through collected items
-               [::b]esc     [white:black:-]Return focus to directory list
-        [::b]space, d     [white:black:-]Remove item from collector
-               [::b]D     [white:black:-]Remove all items from collector
-
-Sort by (twice toggles asc/desc):
-               [::b]n     [white:black:-]Sort by name (asc/desc)
-               [::b]s     [white:black:-]Sort by size (asc/desc)
-               [::b]C     [white:black:-]Sort by file count (asc/desc)
-               [::b]M     [white:black:-]Sort by mtime (asc/desc)`
-)
-
 // currentDirLabelText builds the breadcrumb label shown above the table,
 // annotated when a mid-scan preview is being displayed.
 func (ui *UI) currentDirLabelText() string {
@@ -365,74 +319,6 @@ func (ui *UI) showErrFromGo(msg string, err error) {
 	ui.app.QueueUpdateDraw(func() {
 		ui.showErr(msg, err)
 	})
-}
-
-func (ui *UI) showHelp() {
-	text := tview.NewTextView().SetDynamicColors(true)
-	text.SetBorder(true).SetBorderPadding(2, 2, 2, 2)
-	text.SetBorderColor(tcell.ColorDefault)
-	text.SetTitle(" gdu help ")
-	text.SetScrollable(true)
-
-	formattedHelpText := ui.formatHelpTextFor()
-	text.SetText(formattedHelpText)
-
-	maxHeight := strings.Count(formattedHelpText, "\n") + 7
-	_, height := ui.screen.Size()
-	if height > maxHeight {
-		height = maxHeight
-	}
-
-	flex := tview.NewFlex().
-		AddItem(nil, 0, 1, false).
-		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
-			AddItem(nil, 0, 1, false).
-			AddItem(text, height, 1, false).
-			AddItem(nil, 0, 1, false), 80, 1, false).
-		AddItem(nil, 0, 1, false)
-
-	ui.help = flex
-	ui.pages.AddPage("help", flex, true, true)
-	ui.focusOverlay(text)
-}
-
-func (ui *UI) formatHelpTextFor() string {
-	lines := strings.Split(helpText, "\n")
-
-	for i, line := range lines {
-		if ui.UseColors {
-			lines[i] = strings.ReplaceAll(
-				strings.ReplaceAll(line, defaultColorBold, "[red]"),
-				whiteOnBlack,
-				"[white]",
-			)
-		}
-
-		isDeleteAction := strings.Contains(line, "Empty file or directory") ||
-			strings.Contains(line, "Delete file or directory")
-		isTrashAction := strings.Contains(line, "Trash file or directory")
-		isFound := isDeleteAction || isTrashAction
-
-		switch {
-		case ui.noDelete && isFound:
-			lines[i] += helpDisabledSuffix
-		case ui.noDeleteWithFilter && isFound:
-			lines[i] += " (disabled/filter)"
-		case isTrashAction && len(ui.trashCmd) == 0:
-			lines[i] += helpDisabledSuffix
-		}
-
-		if ui.noSpawnShell && (strings.Contains(line, "Spawn shell in current directory") ||
-			strings.Contains(line, "Open file or directory in external program")) {
-			lines[i] += helpDisabledSuffix
-		}
-
-		if ui.noViewFile && strings.Contains(line, "Show content of file") {
-			lines[i] += helpDisabledSuffix
-		}
-	}
-
-	return strings.Join(lines, "\n")
 }
 
 func (ui *UI) formatTypeFilterInfo(numberColor, textColor string) string {
