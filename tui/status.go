@@ -18,30 +18,17 @@ func (ui *UI) toggleStatusBar(show bool) {
 		textBgColor = tcell.NewRGBColor(255, 255, 255)
 	}
 
-	ui.grid.Clear()
-
 	ui.statusMut.Lock()
-	defer ui.statusMut.Unlock()
-
 	if show {
 		ui.status = tview.NewTextView().SetDynamicColors(true)
 		ui.status.SetTextColor(textColor)
 		ui.status.SetBackgroundColor(textBgColor)
-
-		ui.grid.SetRows(1, 1, 0, 1, 1)
-		ui.grid.AddItem(ui.header, 0, 0, 1, 1, 0, 0, false).
-			AddItem(ui.currentDirLabel, 1, 0, 1, 1, 0, 0, false).
-			AddItem(ui.table, 2, 0, 1, 1, 0, 0, true).
-			AddItem(ui.status, 3, 0, 1, 1, 0, 0, false).
-			AddItem(ui.footer, 4, 0, 1, 1, 0, 0, false)
-		return
+	} else {
+		ui.status = nil
 	}
-	ui.status = nil
-	ui.grid.SetRows(1, 1, 0, 1)
-	ui.grid.AddItem(ui.header, 0, 0, 1, 1, 0, 0, false).
-		AddItem(ui.currentDirLabel, 1, 0, 1, 1, 0, 0, false).
-		AddItem(ui.table, 2, 0, 1, 1, 0, 0, true).
-		AddItem(ui.footer, 3, 0, 1, 1, 0, 0, false)
+	ui.statusMut.Unlock()
+
+	ui.createGrid()
 }
 
 func (ui *UI) updateStatusWorker() {

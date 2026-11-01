@@ -43,7 +43,9 @@ func (ui *UI) focusContent(target contentFocus) bool {
 	case typeFilterFocus:
 		primitive = ui.typeFilteringInput
 	case collectorFocus:
-		primitive = ui.collectorTable
+		if ui.collectorVisible() {
+			primitive = ui.collectorTable
+		}
 	}
 	if primitive == nil {
 		return false
@@ -77,7 +79,7 @@ func (ui *UI) contentFocusOrder() []contentFocus {
 	if ui.typeFilteringInput != nil {
 		order = append(order, typeFilterFocus)
 	}
-	if ui.collectorTable != nil {
+	if ui.collectorTable != nil && ui.collectorVisible() {
 		order = append(order, collectorFocus)
 	}
 	return order

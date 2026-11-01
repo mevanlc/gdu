@@ -152,10 +152,36 @@ func (ui *UI) itemMarkedAtRow(row int, item fs.Item) bool {
 	return marked
 }
 
+func (ui *UI) collectorVisible() bool {
+	return ui.collectorEnabled &&
+		!ui.scanning &&
+		!ui.previewing &&
+		(ui.pages == nil || !ui.pages.HasPage("progress"))
+}
+
+func (ui *UI) syncCollectorVisibility() {
+	if !ui.collectorEnabled || ui.grid == nil {
+		return
+	}
+	visible := ui.collectorVisible() && ui.collectorTable != nil
+	if !visible {
+		if ui.collectorFocused {
+			ui.focusTable()
+		}
+		if ui.overlayFocusSaved && ui.overlayReturnFocus == collectorFocus {
+			ui.overlayReturnFocus = directoryFocus
+		}
+	}
+	if visible != ui.collectorShown {
+		ui.createGrid()
+	}
+}
+
 func (ui *UI) showCollector() {
 	if ui.collectorTable == nil {
 		return
 	}
+	ui.syncCollectorVisibility()
 
 	ui.collectorTable.Clear()
 	title := fmt.Sprintf(" Collector (%d) — Tab/S-Tab focus, Esc back, d remove, D clear ", len(ui.collectorItems))

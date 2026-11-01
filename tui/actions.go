@@ -85,6 +85,7 @@ func (ui *UI) AnalyzePath(path string, parentDir fs.Item) error {
 
 	ui.scanStart = time.Now()
 	ui.scanning = true
+	ui.syncCollectorVisibility()
 	go func() {
 		defer debug.FreeOSMemory()
 		currentDir := ui.Analyzer.AnalyzeDir(path, ui.CreateIgnoreFunc(), ui.CreateFileTypeFilter())
@@ -115,8 +116,8 @@ func (ui *UI) AnalyzePath(path string, parentDir fs.Item) error {
 			ui.previewing = false
 			ui.previewSavedDir = nil
 			ui.currentDir = currentDir
-			ui.showDir()
 			ui.pages.RemovePage("progress")
+			ui.showDir()
 		})
 
 		if ui.done != nil {
@@ -143,6 +144,7 @@ func (ui *UI) ReadAnalysis(input io.Reader) error {
 		AddItem(nil, 0, 1, false)
 
 	ui.pages.AddPage("progress", flex, true, true)
+	ui.syncCollectorVisibility()
 
 	go func() {
 		var err error
@@ -150,6 +152,7 @@ func (ui *UI) ReadAnalysis(input io.Reader) error {
 		if err != nil {
 			ui.app.QueueUpdateDraw(func() {
 				ui.pages.RemovePage("progress")
+				ui.syncCollectorVisibility()
 				ui.showErr("Error reading file", err)
 			})
 			if ui.done != nil {
@@ -166,8 +169,8 @@ func (ui *UI) ReadAnalysis(input io.Reader) error {
 		ui.topDir.UpdateStats(links)
 
 		ui.app.QueueUpdateDraw(func() {
-			ui.showDir()
 			ui.pages.RemovePage("progress")
+			ui.showDir()
 		})
 
 		if ui.done != nil {

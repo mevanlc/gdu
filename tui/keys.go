@@ -323,6 +323,7 @@ func (ui *UI) exitPreview() {
 	if ui.progressFlex != nil {
 		ui.pages.AddPage("progress", ui.progressFlex, true, true)
 	}
+	ui.syncCollectorVisibility()
 	ui.app.SetFocus(ui.table)
 }
 

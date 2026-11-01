@@ -389,3 +389,98 @@ func TestCollectorTrashActsOnAllItems(t *testing.T) {
 	assert.NoFileExists(t, "test_dir/nested/subnested/file")
 	assert.Empty(t, ui.collectorItems)
 }
+
+func screenText(screen tcell.SimulationScreen) string {
+	cells, width, height := screen.GetContents()
+	var buf bytes.Buffer
+	for y := range height {
+		for x := range width {
+			cell := cells[y*width+x]
+			if len(cell.Bytes) > 0 {
+				buf.Write(cell.Bytes)
+			} else {
+				buf.WriteByte(' ')
+			}
+		}
+		buf.WriteByte('\n')
+	}
+	return buf.String()
+}
+
+func drawPages(ui *UI, screen tcell.SimulationScreen) string {
+	screen.Clear()
+	ui.pages.Draw(screen)
+	screen.Show()
+	return screenText(screen)
+}
+
+func TestCollectorHiddenWhileScanningAndRescanning(t *testing.T) {
+	cleanup := testdir.CreateTestDir()
+	defer cleanup()
+
+	screen := testapp.CreateSimScreen()
+	require.NoError(t, screen.Init())
+	screen.SetSize(240, 30)
+	t.Cleanup(screen.Fini)
+
+	app := testapp.CreateMockedApp(true)
+	ui := CreateUI(app, screen, &bytes.Buffer{}, false, true, false, false, func(ui *UI) {
+		ui.SetCollector(CollectorSplitVertical)
+	})
+	ui.pages.SetRect(0, 0, 240, 30)
+	ui.done = make(chan struct{})
+
+	require.NoError(t, ui.AnalyzePath("test_dir", nil))
+	<-ui.done
+
+	// Before the scan completion callback runs on the UI thread, scanning is still in progress.
+	assert.True(t, ui.scanning)
+	assert.False(t, ui.collectorVisible())
+	assert.False(t, ui.collectorShown)
+	assert.NotContains(t, drawPages(ui, screen), "Collector (")
+
+	// Entering mid-scan preview keeps the collector hidden while scanning is in progress.
+	assert.Nil(t, ui.keyPressed(tcell.NewEventKey(tcell.KeyTab, 0, 0)))
+	assert.True(t, ui.previewing)
+	assert.False(t, ui.collectorVisible())
+	assert.False(t, ui.collectorShown)
+	assert.NotContains(t, drawPages(ui, screen), "Collector (")
+
+	// Leaving preview returns to the progress modal with the collector still hidden.
+	assert.Nil(t, ui.keyPressed(tcell.NewEventKey(tcell.KeyTab, 0, 0)))
+	assert.False(t, ui.previewing)
+	assert.False(t, ui.collectorVisible())
+	assert.False(t, ui.collectorShown)
+	assert.NotContains(t, drawPages(ui, screen), "Collector (")
+
+	// Completing the scan shows the collector view.
+	flushCollectorUpdates(ui, 0)
+	assert.False(t, ui.scanning)
+	assert.True(t, ui.collectorVisible())
+	assert.True(t, ui.collectorShown)
+	assert.Contains(t, drawPages(ui, screen), "Collector (0)")
+
+	// Collect an item, focus the collector, then start a rescan.
+	ui.fileItemMarked(tableRowForPath(t, ui.table, "test_dir/nested"))
+	ui.focusCollector()
+	require.True(t, ui.collectorFocused)
+	assert.Contains(t, drawPages(ui, screen), "Collector (1)")
+
+	updateCount := len(ui.app.(*testapp.MockedApp).GetUpdateDraws())
+	ui.rescanDir()
+	<-ui.done
+
+	assert.True(t, ui.scanning)
+	assert.False(t, ui.collectorFocused)
+	assert.False(t, ui.collectorVisible())
+	assert.False(t, ui.collectorShown)
+	assert.Len(t, ui.collectorItems, 1)
+	assert.NotContains(t, drawPages(ui, screen), "Collector (")
+
+	flushCollectorUpdates(ui, updateCount)
+	assert.False(t, ui.scanning)
+	assert.True(t, ui.collectorVisible())
+	assert.True(t, ui.collectorShown)
+	assert.Len(t, ui.collectorItems, 1)
+	assert.Contains(t, drawPages(ui, screen), "Collector (1)")
+}

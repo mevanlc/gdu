@@ -215,7 +215,7 @@ func (ui *UI) showDir() {
 	ui.showCollector()
 
 	if !ui.filtering && !ui.typeFiltering {
-		if keepCollectorFocus && ui.collectorEnabled {
+		if keepCollectorFocus && ui.collectorVisible() {
 			ui.focusCollector()
 		} else {
 			ui.focusTable()

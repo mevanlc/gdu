@@ -111,6 +111,7 @@ type UI struct {
 	previewSavedDir         fs.Item
 	progressFlex            *tview.Flex
 	collectorEnabled        bool
+	collectorShown          bool
 	collectorFocused        bool
 	collectorPrintOnExit    bool
 	collectorSplit          string
@@ -251,10 +252,17 @@ func CreateUI(
 	return ui
 }
 
-// createGrid creates the main grid layout
+// createGrid creates or updates the main grid layout
 func (ui *UI) createGrid() {
+	if ui.grid == nil {
+		ui.grid = tview.NewGrid()
+	} else {
+		ui.grid.Clear()
+	}
+
 	content := tview.Primitive(ui.table)
-	if ui.collectorEnabled {
+	ui.collectorShown = ui.collectorVisible() && ui.collectorTable != nil
+	if ui.collectorShown {
 		direction := tview.FlexColumn
 		if ui.collectorSplit == CollectorSplitHorizontal {
 			direction = tview.FlexRow
@@ -264,18 +272,41 @@ func (ui *UI) createGrid() {
 			AddItem(ui.collectorTable, 0, 1, false)
 	}
 
+	ui.statusMut.RLock()
+	status := ui.status
+	ui.statusMut.RUnlock()
+
 	if ui.headerHidden {
-		ui.grid = tview.NewGrid().SetRows(1, 0, 1).SetColumns(0)
+		if status != nil {
+			ui.grid.SetRows(1, 0, 1, 1).SetColumns(0)
+			ui.grid.AddItem(ui.currentDirLabel, 0, 0, 1, 1, 0, 0, false).
+				AddItem(content, 1, 0, 1, 1, 0, 0, true).
+				AddItem(status, 2, 0, 1, 1, 0, 0, false).
+				AddItem(ui.footer, 3, 0, 1, 1, 0, 0, false)
+			return
+		}
+		ui.grid.SetRows(1, 0, 1).SetColumns(0)
 		ui.grid.AddItem(ui.currentDirLabel, 0, 0, 1, 1, 0, 0, false).
 			AddItem(content, 1, 0, 1, 1, 0, 0, true).
 			AddItem(ui.footer, 2, 0, 1, 1, 0, 0, false)
-	} else {
-		ui.grid = tview.NewGrid().SetRows(1, 1, 0, 1).SetColumns(0)
+		return
+	}
+
+	if status != nil {
+		ui.grid.SetRows(1, 1, 0, 1, 1).SetColumns(0)
 		ui.grid.AddItem(ui.header, 0, 0, 1, 1, 0, 0, false).
 			AddItem(ui.currentDirLabel, 1, 0, 1, 1, 0, 0, false).
 			AddItem(content, 2, 0, 1, 1, 0, 0, true).
-			AddItem(ui.footer, 3, 0, 1, 1, 0, 0, false)
+			AddItem(status, 3, 0, 1, 1, 0, 0, false).
+			AddItem(ui.footer, 4, 0, 1, 1, 0, 0, false)
+		return
 	}
+
+	ui.grid.SetRows(1, 1, 0, 1).SetColumns(0)
+	ui.grid.AddItem(ui.header, 0, 0, 1, 1, 0, 0, false).
+		AddItem(ui.currentDirLabel, 1, 0, 1, 1, 0, 0, false).
+		AddItem(content, 2, 0, 1, 1, 0, 0, true).
+		AddItem(ui.footer, 3, 0, 1, 1, 0, 0, false)
 }
 
 // SetSelectedTextColor sets the color for the highlighted selected text
