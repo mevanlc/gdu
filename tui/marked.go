@@ -22,17 +22,16 @@ func (ui *UI) fileItemMarked(row int) {
 			return
 		}
 		ui.toggleCollected(item)
-		ui.showDir()
-		ui.table.Select(min(row+1, ui.table.GetRowCount()-1), 0)
-		return
-	}
-
-	if _, ok := ui.markedRows[row]; ok {
+	} else if _, ok := ui.markedRows[row]; ok {
 		delete(ui.markedRows, row)
 	} else {
 		ui.markedRows[row] = struct{}{}
 	}
+
+	// showDir resets scrolling; keep the viewport when only marks change.
+	rowOffset, columnOffset := ui.table.GetOffset()
 	ui.showDir()
+	ui.table.SetOffset(rowOffset, columnOffset)
 	// select next row if possible
 	ui.table.Select(min(row+1, ui.table.GetRowCount()-1), 0)
 }
